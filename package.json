@@ -39,8 +39,7 @@
     }
   ],
   "license": "Apache-2.0",
-  "bugs": {
-  },
+  "bugs": {},
   "scripts": {
     "start": "node app.js",
     "build": "browserify -o public/js/main.js src/index.js",

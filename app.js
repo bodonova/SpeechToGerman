@@ -31,8 +31,8 @@ var express = require('express'),
 var config = {
   version: 'v1',
   url: 'https://stream.watsonplatform.net/speech-to-text/api',
-  username: 'user name to access STT service',
-  password: 'password to access STT service'
+  username: '3882c0c3-60f1-47c3-9946-26b6c9aefd73',
+  password: 'GkhU74b1vGDx'
 };
 
 // if bluemix credentials exists, then override local
@@ -45,7 +45,7 @@ if (!!process.env.VCAP_SERVICES) {
   app.use (function (req, res, next) {
     if (req.secure) {
       next();
-    } 
+    }
     else {
       res.redirect('https://' + req.headers.host + req.url);
     }
@@ -71,20 +71,22 @@ app.get('/token', function(req, res) {
 app.use(bodyParser.urlencoded({ extended: false }));
 
 var mt_credentials = extend({
-  url: 'https://gateway.watsonplatform.net/language-translation/api',
-  username: 'user name to access MT service',
-  password: 'password to access MT service',
+  old_url: 'https://gateway.watsonplatform.net/language-translation/api',
+  url: 'https://gateway.watsonplatform.net/language-translator/api',
+  username: '2c33d5ba-4aa2-496d-83be-62eb1c396cdb',
+  password: 'j6UVno7bBfaE',
   version: 'v2'
 }, bluemix.getServiceCreds('language-translation')); // VCAP_SERVICES
 
 var language_translation = watson.language_translation(mt_credentials);
+console.log(' ---> mt_credentials == ' + JSON.stringify(mt_credentials));
 
 app.post('/api/translate', function(req, res, next) {
   //console.log('/v2/translate');
-  
+
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
-  //console.log(' ---> params == ' + JSON.stringify(params)); //L.R.
-  
+  console.log(' ---> MT params == ' + JSON.stringify(params)); //L.R.
+
   language_translation.translate(params, function(err, models) {
   if (err)
     return next(err);
@@ -99,8 +101,8 @@ app.post('/api/translate', function(req, res, next) {
 var tts_credentials = extend({
   url: 'https://stream.watsonplatform.net/text-to-speech/api',
   version: 'v1',
-  username: 'user name to access TTS service',
-  password: 'password to access TTS service',
+  username: '8561d912-9223-4f49-9015-217afdaf4cf7',
+  password: 'zSX3pRvBCVSh',
 }, bluemix.getServiceCreds('text_to_speech'));
 
 // Create the service wrappers
@@ -108,6 +110,7 @@ var textToSpeech = watson.text_to_speech(tts_credentials);
 
 app.get('/synthesize', function(req, res) {
   var transcript = textToSpeech.synthesize(req.query);
+  console.log ('synthesize query: '+JSON.stringify(req.query));
   transcript.on('response', function(response) {
     if (req.query.download) {
       response.headers['content-disposition'] = 'attachment; filename=transcript.ogg';

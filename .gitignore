@@ -1,4 +1,5 @@
 node_modules
+creds
 uploads/
 .DS_Store
 public/js/main.js
