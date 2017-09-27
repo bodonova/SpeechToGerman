@@ -1,8 +1,8 @@
 # SpeechToSpeech
 # Speech to Speech Browser Application
 
-  The application uses IBM's speech recognition, machine translation, and voice synthesis capabilities to instantly translate speech to another language and read the translation aloud.
-  
+  The application uses IBM's speech recognition, machine translation, and voice synthesis capabilities to instantly translate speech to another language and read the translation aloud. This is heavily based on the https://github.com/leonrch/SpeechToSpeech sample (the only change is the addition of support for German)
+
 Node.js is used to provide the browser client's authentication token.
 
 Give it a try! Click the button below to fork into IBM DevOps Services and deploy your own copy of this application on Bluemix.
@@ -29,7 +29,7 @@ declared-services:
     plan: standard
   text-to-speech-service:
     label: text_to_speech
-    plan: standard	
+    plan: standard
 applications:
 - name: <application name>
   command: node app.js
