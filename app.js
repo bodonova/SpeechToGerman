@@ -69,30 +69,44 @@ app.get('/token', function(req, res) {
 // L.R.
 // ------------------------------- MT ---------------------------------
 app.use(bodyParser.urlencoded({ extended: false }));
-
 var mt_credentials = extend({
   old_url: 'https://gateway.watsonplatform.net/language-translation/api',
   url: 'https://gateway.watsonplatform.net/language-translator/api',
   username: '2c33d5ba-4aa2-496d-83be-62eb1c396cdb',
   password: 'j6UVno7bBfaE',
+  //version: '2017-07-01',
   version: 'v2'
 }, bluemix.getServiceCreds('language-translation')); // VCAP_SERVICES
 
 var language_translation = watson.language_translation(mt_credentials);
-console.log(' ---> mt_credentials == ' + JSON.stringify(mt_credentials));
+//console.log(' ---> mt_credentials == ' + JSON.stringify(mt_credentials));
 
 app.post('/api/translate', function(req, res, next) {
   //console.log('/v2/translate');
 
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
-  console.log(' ---> MT params == ' + JSON.stringify(params)); //L.R.
+  //console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
 
-  language_translation.translate(params, function(err, models) {
-  if (err)
-    return next(err);
-  else
-    res.json(models);
+  // Hack to get NMT model Called BOD
+  var unirest = require('unirest');
+  var nmt_url = mt_credentials.url + '/v2/translate?version=2017-07-01';
+  console.log(' ---> hack URL '+nmt_url+' param '+JSON.stringify(params));
+  unirest.post(nmt_url)
+  .header('Accept', 'application/json')
+  .auth(mt_credentials.username, mt_credentials.password, true)
+  .send(params)
+  .end(function (response) {
+    console.log(' ---> response: '+JSON.stringify(response.body));
+    res.json(response.body);
   });
+
+  // calling the official library
+  // language_translation.translate(params, function(err, models) {
+  // if (err)
+  //   return next(err);
+  // else
+  //   res.json(models);
+  // });
 });
 // ----------------------------------------------------------------------
 
