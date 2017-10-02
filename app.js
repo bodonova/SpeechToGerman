@@ -88,25 +88,25 @@ app.post('/api/translate', function(req, res, next) {
   //console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
 
   // Hack to get NMT model Called BOD
-  // var unirest = require('unirest');
-  // var nmt_url = mt_credentials.url + '/v2/translate?version=2017-07-01';
-  // console.log(' ---> hack URL '+nmt_url+' param '+JSON.stringify(params));
-  // unirest.post(nmt_url)
-  // .header('Accept', 'application/json')
-  // .auth(mt_credentials.username, mt_credentials.password, true)
-  // .send(params)
-  // .end(function (response) {
-  //   console.log(' ---> response: '+JSON.stringify(response.body));
-  //   res.json(response.body);
-  // });
+  var unirest = require('unirest');
+  var nmt_url = mt_credentials.url + '/v2/translate?version=2017-07-01';
+  console.log(' ---> hack URL '+nmt_url+' param '+JSON.stringify(params));
+  unirest.post(nmt_url)
+  .header('Accept', 'application/json')
+  .auth(mt_credentials.username, mt_credentials.password, true)
+  .send(params)
+  .end(function (response) {
+    console.log(' ---> response: '+JSON.stringify(response.body));
+    res.json(response.body);
+  });
 
   // calling the official library
-  language_translation.translate(params, function(err, models) {
-  if (err)
-    return next(err);
-  else
-    res.json(models);
-  });
+  // language_translation.translate(params, function(err, models) {
+  // if (err)
+  //   return next(err);
+  // else
+  //   res.json(models);
+  // });
 });
 // ----------------------------------------------------------------------
 
