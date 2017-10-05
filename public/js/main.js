@@ -995,7 +995,7 @@ function translate(textContent) {
 				    var delimiter = val.length > 0 ? ". " : "";
 					return val + delimiter + translation;
 				});
-				//TTS(translation);
+				TTS(translation);
 			})
 			.fail(function(jqXHR, statustext, errorthrown) {
 				console.log('statustext: '+statustext + ' errorthrown: '+errorthrown);
