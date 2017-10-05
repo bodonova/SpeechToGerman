@@ -913,14 +913,6 @@ var initTextScroll = function() {
   });
 }
 
-function updateScroll(){
-  if(!scrolled){
-  // L.R.
-  //  var element = $('.table-scroll').get(0);
-  //  element.scrollTop = element.scrollHeight;
-  }
-}
-
 // L.R.
 // --------------------------------- MT & TTS ----------------------------------------
 function getVoice() {
@@ -964,7 +956,7 @@ function getTargetLanguageCode() {
 }
 
 function translate(textContent) {
-	// 1. get current speech-to-text model, extract its two first letters, and lower case them.
+  // 1. get current speech-to-text model, extract its two first letters, and lower case them.
 	var currentModel = localStorage.getItem('currentModel') || 'en-US_BroadbandModel';
 	var mt_source = currentModel.substring(0, 2).toLowerCase();
 
@@ -990,23 +982,27 @@ function translate(textContent) {
 			headers: {
 				'X-WDC-PL-OPT-OUT': '0'
 			},
-			async: true
+			async: true,
+      timeout: 3000 // sets timeout to 3 seconds
 		};
 
+    console.log ('calling translate API: '+JSON.stringify(restAPICall));
 		$.ajax(restAPICall)
 			.done(function(data) {
+        console.log ('data: '+JSON.stringify(data));
 				var translation = data['translations'][0]['translation'];
 				$('#translation textarea').val(function(_, val){
 				    var delimiter = val.length > 0 ? ". " : "";
 					return val + delimiter + translation;
 				});
-				TTS(translation);
+				//TTS(translation);
 			})
 			.fail(function(jqXHR, statustext, errorthrown) {
-				console.log(statustext + errorthrown);
+				console.log('statustext: '+statustext + ' errorthrown: '+errorthrown);
 			});
 	}
 	else {
+    console.log('no need to translate since source and text match');
 		$('#translation textarea').val(textContent);
 		TTS(textContent);
 	}
@@ -1014,22 +1010,17 @@ function translate(textContent) {
 
 var ttsAudio = $('.audio-tts').get(0);
 
+
+$('#translate').click(function() {
+  var textContent = $('#resultsText').val();
+  $('#translation textarea').val('');
+  translate(textContent);
+});
+
 $('#playTTS').click(function() {
   var textContent = $('#resultsText').val();
   $('#translation textarea').val('');
   translate(textContent);
-
-  /*
-  var downloadURL = '/synthesize' + '?voice=' + getVoice() +
-    '&text=' + encodeURIComponent($('#translation textarea').val()) +
-    '&X-WDC-PL-OPT-OUT=0';
-
-  ttsAudio.currentTime = 0;
-  ttsAudio.pause();
-  ttsAudio.src = downloadURL;
-  ttsAudio.load();
-  ttsAudio.play();
-  */
 });
 
 $('#stopTTS').click(function() {
@@ -1131,6 +1122,7 @@ exports.showResult = function(msg, baseString, callback) {
 	  }
     }
 	else {
+      console.log('text='+text+' baseString='+baseString);
       var tempString = baseString + text;
       tempString = tempString.replace(/%HESITATION\s/g, '');
       tempString = tempString.replace(/(.)\1{2,}/g, '');
@@ -1138,7 +1130,6 @@ exports.showResult = function(msg, baseString, callback) {
     }
   }
 
-  updateScroll();
   updateTextScroll();
   return baseString;
 
@@ -1412,7 +1403,7 @@ var effects = require('./effects');
 
 var LOOKUP_TABLE = {
   'ar-AR_BroadbandModel': ['ar-AR_Broadband_sample1.wav', 'ar-AR_Broadband_sample2.wav'],
-  'en-US_BroadbandModel': ['Us_English_Broadband_Sample_1.wav', 'Us_English_Broadband_Sample_2.wav'],
+  'en-US_BroadbandModel': ['Us_English_Broadband_Sample_1.wav', 'Us_English_Broadband_Sample_2.wav', 'AmericaFirst.wav', 'homer-balogna.wav'],
   'en-US_NarrowbandModel': ['Us_English_Narrowband_Sample_1.wav', 'Us_English_Narrowband_Sample_2.wav'],
   'es-ES_BroadbandModel': ['Es_ES_spk24_16khz.wav', 'Es_ES_spk19_16khz.wav'],
   'es-ES_NarrowbandModel': ['Es_ES_spk24_8khz.wav', 'Es_ES_spk19_8khz.wav'],
@@ -1538,6 +1529,42 @@ exports.initPlaySample = function(ctx) {
   (function() {
     var fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][1];
     var el = $('.play-sample-2');
+    el.off('click');
+    var iconName = 'play';
+    var imageTag = el.find('img');
+    el.click( function(evt) {
+      playSample(ctx.token, imageTag, iconName, fileName, function(result) {
+        console.log('Play sample result', result);
+      });
+    });
+  })(ctx, LOOKUP_TABLE);
+
+  (function() {
+    var fileName = LOOKUP_TABLE[ctx.currentModel][2];
+    if (!fileName) {
+      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][0];
+    } else {
+      fileName = 'audio/' + fileName;
+    }
+    var el = $('.play-sample-3');
+    el.off('click');
+    var iconName = 'play';
+    var imageTag = el.find('img');
+    el.click( function(evt) {
+      playSample(ctx.token, imageTag, iconName, fileName, function(result) {
+        console.log('Play sample result', result);
+      });
+    });
+  })(ctx, LOOKUP_TABLE);
+
+  (function() {
+    var fileName = LOOKUP_TABLE[ctx.currentModel][3];
+    if (!fileName) {
+      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][1];
+    } else {
+      fileName = 'audio/' + fileName;
+    }
+    var el = $('.play-sample-4');
     el.off('click');
     var iconName = 'play';
     var imageTag = el.find('img');

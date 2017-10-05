@@ -87,6 +87,7 @@
 			  </ul>
 		  </nav>
 		</div>
+
 		<div class="row">
 			<nav class="navbar navbar-inverse navbar-secondary">
 				<ul class="navbar-text">
@@ -96,7 +97,22 @@
 					</li>
 					<li class="play-sample-2 button-row nav-inverse-color">
 						<img src="images/play.svg" class="icon">
-						<span class="nav-label">Play  Sample 2</span>
+						<span class="nav-label">Play Sample 2</span>
+					</li>
+				</ul>
+			</nav>
+		</div>
+
+		<div class="row">
+			<nav class="navbar navbar-inverse navbar-secondary">
+				<ul class="navbar-text">
+					<li class="play-sample-3 button-row nav-inverse-color">
+						<img src="images/play.svg" class="icon">
+						<span class="nav-label">Play Sample 3</span>
+					</li>
+					<li class="play-sample-4 button-row nav-inverse-color">
+						<img src="images/play.svg" class="icon">
+						<span class="nav-label">Play Sample 4</span>
 					</li>
 				</ul>
 			</nav>
@@ -111,8 +127,7 @@
 
 				  <!-- Nav tabs -->
 				  <ul class="nav nav-tabs" role="tablist">
-					<li role="presentation" class="active"><a href="#home2" aria-controls="home" role="tab" data-toggle="tab">Text</a></li>
-					<!-- <li role="presentation"><a href="#profile2" aria-controls="profile" role="tab" data-toggle="tab">JSON</a></li> -->
+					<li role="presentation" class="active"><a href="#home2" aria-controls="home" role="tab" data-toggle="tab">Input Text</a></li>
 				  </ul>
 
 				  <div class="hr-tab"></div>
@@ -137,30 +152,40 @@
 					  </div>
 					</div>
 
-
 					<div class="form-group row tabpanel-row">
 					  <div class="col-lg-12">
 						<div class="tab-content">
 						  <div role="tabpanel" class="tab-pane active" id="home2">
-							<textarea readonly id="resultsText"></textarea>
+							<textarea id="resultsText" readonly></textarea>
 						  </div>
 						</div>
 					  </div><!-- .col-lg-12 -->
 					</div>
+
 				  </fieldset>
+
+<!-- comment out because not working - BOD - remove the readonly above if uncommenting
+          <ul class="nav nav-tabs" role="tablist">
+					<li role="presentation" class="active">
+            <button id="translate">Translate</button>
+          </li>
+				  </ul>
+-->
+
 				</div>
 			  </form>
 			</div>
 		  </div><!-- /.well -->
 		</div><!-- /.tabpanel -->
 
-
 		<div class="well">
 			<div role="tabpanel">
 				<ul class="nav nav-tabs" role="tablist">
-					<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Translation</a></li>
+					<li role="presentation" class="active"><a href="#home" aria-controls="home" role="tab" data-toggle="tab">Translation</a>
+          </li>
 				</ul>
 				<div class="hr-tab"></div>
+
 				<fieldset>
 					<div class="col-lg-12">
 						<div class="tab-content">
@@ -195,6 +220,5 @@
       <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
       <script> (typeof $().emulateTransitionEnd == 'function')|| document.write('<script src="js/bootstrap-3.3.5.min.js"><\/script>')</script>
       <script src="js/main.js"></script>
-
   </body>
 </html>

@@ -85,7 +85,7 @@ app.post('/api/translate', function(req, res, next) {
   //console.log('/v2/translate');
 
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
-  //console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
+  console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
 
   // Hack to get NMT model Called BOD
   var unirest = require('unirest');
@@ -96,7 +96,7 @@ app.post('/api/translate', function(req, res, next) {
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
-    console.log(' ---> response: '+JSON.stringify(response.body));
+    console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
     res.json(response.body);
   });
 
