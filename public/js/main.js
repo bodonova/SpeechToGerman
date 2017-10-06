@@ -1010,6 +1010,14 @@ function translate(textContent) {
 
 var ttsAudio = $('.audio-tts').get(0);
 
+// interpret typing enter in resultsText as an intention to submit
+$('#resultsText').keydown(function(event) {
+  // enter has keyCode = 13, change it if you want to use another button
+  if (event.keyCode == 13) {
+    $('#translate').click();
+    return false;
+  }
+});
 
 $('#translate').click(function() {
   var textContent = $('#resultsText').val();
