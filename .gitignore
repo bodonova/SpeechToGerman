@@ -3,3 +3,4 @@ creds
 uploads/
 .DS_Store
 public/js/main.js
+vcap-local.json

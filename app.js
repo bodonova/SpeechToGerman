@@ -18,32 +18,20 @@
 
 var express = require('express'),
     app = express(),
-	bodyParser = require("body-parser"), //L.R.
+	  bodyParser = require("body-parser"), //L.R.
     errorhandler = require('errorhandler'),
     bluemix = require('./config/bluemix'),
     watson = require('watson-developer-cloud'),
     path = require('path'),
-    // environmental variable points to demo's json config file
+    fs = require('fs'),
     extend = require('util')._extend;
 
-// For local development, put username and password in config
-// or store in your environment
-var config = {
-  version: 'v1',
-  url: 'https://stream.watsonplatform.net/speech-to-text/api',
-  username: '3882c0c3-60f1-47c3-9946-26b6c9aefd73',
-  password: 'GkhU74b1vGDx'
-};
-
-// if bluemix credentials exists, then override local
-var credentials = extend(config, bluemix.getServiceCreds('speech_to_text'));
-var authorization = watson.authorization(credentials);
 
 // redirect to https if the app is not running locally
 if (!!process.env.VCAP_SERVICES) {
   app.enable('trust proxy');
   app.use (function (req, res, next) {
-    if (req.secure) {
+    if (req.secure) {ß
       next();
     }
     else {
@@ -55,9 +43,56 @@ if (!!process.env.VCAP_SERVICES) {
 // Setup static public directory
 app.use(express.static(path.join(__dirname , './public')));
 
+
+// When running on Bluemix we will get config data from VCAP_SERVICES
+// and a user variable named VCAP_SERVICES
+// When running locally we will read config from 'vcap-local.json'
+var vcapServices = process.env.VCAP_SERVICES;
+if (!vcapServices) {
+  console.log ("No VCAP_SERVICES variable so we will read vcap-local.json");
+  vcapServices = {};
+} else {
+  vcapServices = JSON.parse(vcapServices);
+  console.log("Data from process.env.VCAP_SERVICES"+JSON.stringify(vcapServices));
+}
+if (fs.existsSync("vcap-local.json")) {
+  //When running locally, the VCAP_SERVICES will not be set so read from vcap-local.json
+  var jsonData = fs.readFileSync("vcap-local.json", "utf-8");
+  // console.log ("vcap-local.json contents\n"+jsonData);
+  var localJSON = JSON.parse(jsonData);
+  console.log ("Parsed local data: "+JSON.stringify(localJSON));
+  // we use extend to merge vcap-local.json with the environment variable
+  // if both exist, local wins
+  vcapServices = extend(vcapServices,localJSON);
+}
+//if (!vcapServices.speech_to_text || !vcapServices.text_to_speech || !vcapServices.language_translator)
+var stt_env = vcapServices.speech_to_text[0].credentials;
+console.log('STT configuration '+JSON.stringify(stt_env));
+var tts_env = vcapServices.text_to_speech[0].credentials;
+console.log('TTS configuration '+JSON.stringify(tts_env));
+var mt_env = vcapServices.language_translator[0].credentials;
+console.log('MT configuration '+JSON.stringify(mt_env));
+if (!stt_env)
+  throw('Incomplete configuration '+JSON.stringify(vcapServices));
+
+var stt_credentials = {version: 'v1', url: stt_env.url, username: stt_env.username, password: stt_env.password};
+console.log('stt_credentials: '+JSON.stringify(stt_credentials));
+var tts_credentials = {version: 'v1', url: tts_env.url, username: tts_env.username, password: tts_env.password};
+console.log('tts_credentials: '+JSON.stringify(tts_credentials));
+var mt_credentials = {version: 'v2', url: mt_env.url, username: mt_env.username, password: mt_env.password};
+console.log('mt_credentials: '+JSON.stringify(mt_credentials));
+
+// Get an authorization ket for the STT service
+var authorization = watson.authorization(stt_credentials);
+if (authorization) {
+  console.log ('authorization: '+JSON.stringify(authorization));
+} else {
+  throw('Failed to get auth key for STT service');
+}
+
 // Get token from Watson using your credentials
 app.get('/token', function(req, res) {
-  authorization.getToken({url: credentials.url}, function(err, token) {
+  authorization.getToken({url: stt_credentials.url}, function(err, token) {
     if (err) {
       console.log('error:', err);
       res.status(err.code);
@@ -66,24 +101,15 @@ app.get('/token', function(req, res) {
   });
 });
 
+//throw('We did enough for now');
+
+
 // L.R.
 // ------------------------------- MT ---------------------------------
 app.use(bodyParser.urlencoded({ extended: false }));
-var mt_credentials = extend({
-  old_url: 'https://gateway.watsonplatform.net/language-translation/api',
-  url: 'https://gateway.watsonplatform.net/language-translator/api',
-  username: '2c33d5ba-4aa2-496d-83be-62eb1c396cdb',
-  password: 'j6UVno7bBfaE',
-  //version: '2017-07-01',
-  version: 'v2'
-}, bluemix.getServiceCreds('language-translation')); // VCAP_SERVICES
-
 var language_translation = watson.language_translation(mt_credentials);
-//console.log(' ---> mt_credentials == ' + JSON.stringify(mt_credentials));
 
 app.post('/api/translate', function(req, res, next) {
-  //console.log('/v2/translate');
-
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
   console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
 
