@@ -31,7 +31,7 @@ var express = require('express'),
 if (!!process.env.VCAP_SERVICES) {
   app.enable('trust proxy');
   app.use (function (req, res, next) {
-    if (req.secure) {ß
+    if (req.secure) {
       next();
     }
     else {
