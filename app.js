@@ -26,22 +26,14 @@ var express = require('express'),
     fs = require('fs'),
     extend = require('util')._extend;
 
-
-// redirect to https if the app is not running locally
-if (!!process.env.VCAP_SERVICES) {
-  app.enable('trust proxy');
-  app.use (function (req, res, next) {
-    if (req.secure) {
-      next();
-    }
-    else {
-      res.redirect('https://' + req.headers.host + req.url);
-    }
-  });
-}
-
 // Setup static public directory
 app.use(express.static(path.join(__dirname , './public')));
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Add error handling in dev
+if (!process.env.VCAP_SERVICES) {
+  app.use(errorhandler());
+}
 
 
 // When running on Bluemix we will get config data from VCAP_SERVICES
@@ -82,7 +74,8 @@ console.log('tts_credentials: '+JSON.stringify(tts_credentials));
 var mt_credentials = {version: 'v2', url: mt_env.url, username: mt_env.username, password: mt_env.password};
 console.log('mt_credentials: '+JSON.stringify(mt_credentials));
 
-// Get an authorization ket for the STT service
+// ------------------------------- STT ---------------------------------
+// Get an authorization key for the STT service
 var authorization = watson.authorization(stt_credentials);
 if (authorization) {
   console.log ('authorization: '+JSON.stringify(authorization));
@@ -92,23 +85,25 @@ if (authorization) {
 
 // Get token from Watson using your credentials
 app.get('/token', function(req, res) {
+  console.log ("Getting a token with credentials "+JSON.stringify(stt_credentials));
   authorization.getToken({url: stt_credentials.url}, function(err, token) {
     if (err) {
-      console.log('error:', err);
+      console.log('getToken error:', err);
       res.status(err.code);
+      var err_text = 'Failed to connect to IBM Watson Speech-to_Text service - check your internet connection.\n'+err;
+      return res.status(500).json({
+        'output': {
+          'text': err_text
+          }}); // the converstion service returned an error
     }
+    console.log ('getToken returns: '+JSON.stringify(token));
     res.send(token);
   });
 });
 
-//throw('We did enough for now');
-
-
 // L.R.
 // ------------------------------- MT ---------------------------------
-app.use(bodyParser.urlencoded({ extended: false }));
 var language_translation = watson.language_translation(mt_credentials);
-
 app.post('/api/translate', function(req, res, next) {
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
   console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
@@ -138,14 +133,6 @@ app.post('/api/translate', function(req, res, next) {
 
 // L.R.
 // -------------------------------- TTS ---------------------------------
-var tts_credentials = extend({
-  url: 'https://stream.watsonplatform.net/text-to-speech/api',
-  version: 'v1',
-  username: '8561d912-9223-4f49-9015-217afdaf4cf7',
-  password: 'zSX3pRvBCVSh',
-}, bluemix.getServiceCreds('text_to_speech'));
-
-// Create the service wrappers
 var textToSpeech = watson.text_to_speech(tts_credentials);
 
 app.get('/synthesize', function(req, res) {
@@ -164,10 +151,21 @@ app.get('/synthesize', function(req, res) {
 
 // ----------------------------------------------------------------------
 
-// Add error handling in dev
-if (!process.env.VCAP_SERVICES) {
-  app.use(errorhandler());
+// redirect to https if the app is not running locally
+if (!!process.env.VCAP_SERVICES) {
+  app.enable('trust proxy');
+  app.use (function (req, res, next) {
+    if (req.secure) {
+      next();
+    }
+    else {
+      res.redirect('https://' + req.headers.host + req.url);
+    }
+  });
 }
+
+// start listening
 var port = process.env.VCAP_APP_PORT || 3000;
-app.listen(port);
+app.listen(port).on('error', console.log);
+
 console.log('listening at:', port);
