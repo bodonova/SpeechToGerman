@@ -967,8 +967,8 @@ function translate(textContent) {
 	// call language translation service if mt_source != mt_target, otherwise jump to TTS
 	if(mt_source != mt_target) {
 		var mid = mt_source + "-" + mt_target; // default domain is 'news'
-    if (mt_source != 'de' && mt_target != 'de')
-	    mid += "-conversational";
+    // if (mt_source == 'de' || mt_target == 'de')
+	  //   mid += "-conversational";
 
 		var callData = {
 			model_id: mid,
