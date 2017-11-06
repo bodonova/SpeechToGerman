@@ -114,6 +114,7 @@ app.post('/api/translate', function(req, res, next) {
   console.log(' ---> hack URL '+nmt_url+' param '+JSON.stringify(params));
   unirest.post(nmt_url)
   .header('Accept', 'application/json')
+  .header('X-Watson-Technology-Preview','2017-07-01')
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
