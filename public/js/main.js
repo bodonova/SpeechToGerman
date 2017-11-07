@@ -281,6 +281,13 @@ module.exports={
          "language": "en-US",
          "description": "English" // "description": "US English broadband model (16KHz)"
       },
+      {
+         //"url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_BroadbandModel",
+        // "rate": 16000,
+         "name": "de-DE_NonModel",
+         "language": "de-DE",
+         "description": "German (typing)" // this is not a STT model but simply a placeholder to add Geman to the dropdown
+      },
       //{
       //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_NarrowbandModel",
       //   "rate": 8000,
@@ -1522,6 +1529,13 @@ var playSample = (function() {
 exports.initPlaySample = function(ctx) {
 
   (function() {
+    if ((null === ctx.currentModel) || ctx.currentModel.includes('NonModel')) {
+      console.log ("model name "+ctx.currentMode+" so this is not a real model");
+      document.getElementById("audioControls").style.display="none";
+      return;
+    } else {
+      document.getElementById("audioControls").style.display="block";
+    }
     var fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][0];
     var el = $('.play-sample-1');
     el.off('click');
@@ -1535,6 +1549,9 @@ exports.initPlaySample = function(ctx) {
   })(ctx, LOOKUP_TABLE);
 
   (function() {
+    if ((null === ctx.currentModel) || ctx.currentModel.includes('NonModel')) {
+      return;
+    }
     var fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][1];
     var el = $('.play-sample-2');
     el.off('click');
@@ -1548,11 +1565,16 @@ exports.initPlaySample = function(ctx) {
   })(ctx, LOOKUP_TABLE);
 
   (function() {
-    var fileName = LOOKUP_TABLE[ctx.currentModel][2];
-    if (!fileName) {
-      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][0];
+    var fileName;
+    if ((null === ctx.currentModel) || ctx.currentModel.includes('NonModel')) {
+      return;
     } else {
-      fileName = 'audio/' + fileName;
+      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][2];
+      if (!fileName) {
+        fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][0];
+      } else {
+        fileName = 'audio/' + fileName;
+      }
     }
     var el = $('.play-sample-3');
     el.off('click');
@@ -1566,11 +1588,16 @@ exports.initPlaySample = function(ctx) {
   })(ctx, LOOKUP_TABLE);
 
   (function() {
-    var fileName = LOOKUP_TABLE[ctx.currentModel][3];
-    if (!fileName) {
-      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][1];
+    var fileName;
+    if ((null === ctx.currentModel) || ctx.currentModel.includes('NonModel')) {
+      return;
     } else {
-      fileName = 'audio/' + fileName;
+      fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][3];
+      if (!fileName) {
+        fileName = 'audio/' + LOOKUP_TABLE[ctx.currentModel][1];
+      } else {
+        fileName = 'audio/' + fileName;
+      }
     }
     var el = $('.play-sample-4');
     el.off('click');
@@ -1713,7 +1740,7 @@ exports.initSelectModel = function(ctx) {
 	// HACK: just for now because these 3 source languages have only 1 target language, which is English
 	if( newModel == "ar-AR_BroadbandModel" ||
     newModel == "pt-BR_BroadbandModel" ||
-    newModel == "de-DE_BroadbandModel" ||
+    newModel == "de-DE_NonModel" ||
 		newModel == "es-ES_BroadbandModel") {
 		$('#dropdownMenuTargetLanguageDefault').text("English");
 	}
