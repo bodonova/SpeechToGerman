@@ -17,6 +17,10 @@
 
 'use strict';
 
+// global variables
+window.audioIn = null;
+window.baseString = '';
+
 var utils = require('./utils');
 /**
  * Captures microphone input from the browser.
@@ -346,14 +350,7 @@ exports.handleFileUpload = function(token, model, file, contentType, callback, o
 
     console.log('contentType', contentType);
 
-    var baseString = '';
-    var baseJSON = '';
-
-    $.subscribe('showjson', function(data) {
-      var $resultsJSON = $('#resultsJSON')
-      $resultsJSON.empty();
-      $resultsJSON.append(baseJSON);
-    });
+    baseString = '';
 
     var options = {};
     options.token = token;
@@ -379,9 +376,8 @@ exports.handleFileUpload = function(token, model, file, contentType, callback, o
 
     function onMessage(msg) {
       if (msg.results) {
-        // Convert to closure approach
-        baseString = display.showResult(msg, baseString);
-        baseJSON = display.showJSON(msg, baseJSON);
+        // Converted to closure approach
+        display.showResult(msg);
       }
     }
 
@@ -418,14 +414,7 @@ exports.handleMicrophone = function(token, model, mic, callback) {
   $.publish('clearscreen');
 
   // Test out websocket
-  var baseString = '';
-  var baseJSON = '';
-
-  $.subscribe('showjson', function(data) {
-    var $resultsJSON = $('#resultsJSON')
-    $resultsJSON.empty();
-    $resultsJSON.append(baseJSON);
-  });
+  baseString = '';
 
   var options = {};
   options.token = token;
@@ -457,9 +446,8 @@ exports.handleMicrophone = function(token, model, mic, callback) {
   function onMessage(msg, socket) {
     console.log('Mic socket msg: ', msg);
     if (msg.results) {
-      // Convert to closure approach
-      baseString = display.showResult(msg, baseString);
-      baseJSON = display.showJSON(msg, baseJSON);
+      // Converted to closure approach
+      display.showResult(msg);
     }
   }
 
@@ -879,32 +867,17 @@ var Alternatives = function(){
 var alternativePrototype = new Alternatives();
 
 // TODO: Convert to closure approach
-var processString = function(baseString, isFinished) {
+var processString = function(currString, isFinished) {
 
   if (isFinished) {
-    var formattedString = baseString.slice(0, -1);
+    var formattedString = currString.slice(0, -1);
     formattedString = formattedString.charAt(0).toUpperCase() + formattedString.substring(1);
     formattedString = formattedString.trim() + '.';
     $('#resultsText').val(formattedString);
   } else {
-    $('#resultsText').val(baseString);
+    $('#resultsText').val(currString);
   }
 
-}
-
-exports.showJSON = function(msg, baseJSON) {
-
-   var json = JSON.stringify(msg, null, 2);
-    baseJSON += json;
-    baseJSON += '\n';
-
-  if ($('.nav-tabs .active').text() == "JSON") {
-      $('#resultsJSON').append(baseJSON);
-      baseJSON = "";
-      console.log("updating json");
-  }
-
-  return baseJSON;
 }
 
 function updateTextScroll(){
@@ -1104,8 +1077,7 @@ exports.initDisplayMetadata = function() {
   initTextScroll();
 };
 
-
-exports.showResult = function(msg, baseString, callback) {
+exports.showResult = function(msg) {
 
   var idx = +msg.result_index;
 
@@ -1113,41 +1085,54 @@ exports.showResult = function(msg, baseString, callback) {
 
     var alternatives = msg.results[0].alternatives;
     var text = msg.results[0].alternatives[0].transcript || '';
+    console.log("baseString="+baseString+" newText="+text + (msg.results[0].final ? " (final)" : " (tentative)"));
+    var transTime = 0, delay = 0;
+    var ts = msg.results[0].alternatives[0].timestamps;
+    if (ts)
+      transTime = ts[ts.length-1][2];
+    // var au =$('.audio-tts').get(0);
+    // var audioTime =  $('.audio-tts').get(0).currentTime;
+    var audioTime = 0;
+    if (audioIn) audioTime = audioIn.currentTime;
+    if (transTime>audioTime)
+      delay = Math.ceil(1000*(transTime-audioTime));
+    console.log ("v2 audioTime="+audioTime+" transTime="+transTime+" delay="+delay+"msec");
+
 
 	// L.R.
 	// console.log('transcription: ---> ' + text);
 
-    // Capitalize first word
-    // if final results, append a new paragraph
-    if (msg.results && msg.results[0] && msg.results[0].final) {
-      baseString += text;
-      var displayFinalString = baseString;
-      displayFinalString = displayFinalString.replace(/%HESITATION\s/g, '');
-      displayFinalString = displayFinalString.replace(/(.)\1{2,}/g, '');
-      processString(displayFinalString, true);
+	setTimeout(function(){
+		// if final results, append a new paragraph
+		if (msg.results && msg.results[0] && msg.results[0].final) {
+		  baseString += text;
+		  var displayFinalString = baseString;
+		  displayFinalString = displayFinalString.replace(/%HESITATION\s/g, '');
+		  displayFinalString = displayFinalString.replace(/(.)\1{2,}/g, '');
+		  processString(displayFinalString, true);
 
-	  // HACK to ignore nn, nnn, nnnn sequences !!!
-	  console.log('---> reco=' + text);
-	  var res = text.match("([n]{2,} )");
-	  if(res == null) {
-		translate(text);
-	  }
-	  else {
-		console.log('---> translation step is skipped for text=' + text);
-	  }
-    }
-	else {
-      console.log('text='+text+' baseString='+baseString);
+		  // HACK to ignore nn, nnn, nnnn sequences !!!
+		  var res = text.match("([n]{2,} )");
+		  if(res == null) {
+        console.log('---> translating text=' + text);
+			  translate(text);
+		  }
+		  else {
+			  console.log('---> translation is skipped for text=' + text);
+		  }
+		}
+		else {
+      console.log ("Temporarily Displaying \""+baseString+"\" + \""+text+"\"");
       var tempString = baseString + text;
-      tempString = tempString.replace(/%HESITATION\s/g, '');
-      tempString = tempString.replace(/(.)\1{2,}/g, '');
-      processString(tempString, false);
-    }
+		  tempString = tempString.replace(/%HESITATION\s/g, '');
+		  tempString = tempString.replace(/(.)\1{2,}/g, '');
+		  processString(tempString, false);
+		}
+
+	  updateTextScroll();
+    console.log('after showResult() baseString='+baseString);
+    }, delay);
   }
-
-  updateTextScroll();
-  return baseString;
-
 };
 
 $.subscribe('clearscreen', function() {
@@ -1302,14 +1287,14 @@ var handleSelectedFile = exports.handleSelectedFile = (function() {
         showNotice('Notice: browsers do not support playing FLAC audio, so no audio will accompany the transcription');
       } else if (r.result === 'RIFF') {
         contentType = 'audio/wav';
-        var audio = new Audio();
+        audioIn = new Audio();
         var wavBlob = new Blob([file], {type: 'audio/wav'});
         var wavURL = URL.createObjectURL(wavBlob);
-        audio.src = wavURL;
-        audio.play();
+        audioIn.src = wavURL;
+        audioIn.play();
         $.subscribe('hardsocketstop', function() {
-          audio.pause();
-          audio.currentTime = 0;
+          audioIn.pause();
+          audioIn.currentTime = 0;
         });
       } else {
         restoreUploadTab();
@@ -1832,16 +1817,6 @@ exports.hideError = function() {
 
 'use strict';
 
-exports.initShowTab = function() {
+exports.initShowTab = function() {}
 
-  $('.nav-tabs a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-    //show selected tab / active
-    var target = $(e.target).text();
-    if (target === 'JSON') {
-      console.log('showing json');
-      $.publish('showjson');
-    }
-  });
-
-}
 },{}]},{},[5]);
