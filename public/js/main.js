@@ -20,6 +20,7 @@
 // global variables
 window.audioIn = null;
 window.baseString = '';
+window.mtLangMap = null;
 
 var utils = require('./utils');
 /**
@@ -285,13 +286,6 @@ module.exports={
          "language": "en-US",
          "description": "English" // "description": "US English broadband model (16KHz)"
       },
-      {
-         //"url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_BroadbandModel",
-        // "rate": 16000,
-         "name": "de-DE_NonModel",
-         "language": "de-DE",
-         "description": "German (typing)" // this is not a STT model but simply a placeholder to add Geman to the dropdown
-      },
       //{
       //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_NarrowbandModel",
       //   "rate": 8000,
@@ -490,6 +484,126 @@ var initViews = require('./views').initViews;
 
 window.BUFFERSIZE = 8192;
 
+function getServerModels(token) {
+  var url = '/api/models';
+  var sttModels = models;
+  var modelRequest = new XMLHttpRequest();
+  modelRequest.open("GET", url, true);
+
+  modelRequest.onload = function(evt) {
+    //console.log("response to "+url+ ": "+modelRequest.responseText);
+	var mtModels = JSON.parse(modelRequest.responseText);
+
+    // turn sttModels array into map for easy lookup table
+    var sttModelMap = {};
+    for (var i=0; i<sttModels.length; i++) {
+      var lang = sttModels[i].language;
+      var slang = lang.substring(0,2);
+      //console.log(Lang "+i+" is "+lang+" shortened to "+slang);
+      if (sttModelMap[slang]) {
+        console.warn("Lang code "+slang+" is doubly defined at "+sttModelMap[slang]+" and "+i);
+      } else {
+        //console.log("Adding language "+slang+" to map at position "+i+" in array");
+        sttModelMap[slang] = i;
+      }
+    }
+
+    // Iterate through the mtModels and see if we can translate from languages not on our sstModel liste
+    var transLangs = {};
+    var langCodeMap = {}; // at same time build a map of language code to name
+    var langNameMap = {}; // at same time build a map of language name to code
+    for (var i=0; i<mtModels.length; i++) {
+
+      // Track the language code to name mappings (handy to know)
+      if (2 == mtModels[i].source.length) { // ignore mapping from long codes
+      	//console.log("storring mapping from "+mtModels[i].source+" to "+mtModels[i].source_name);
+		langCodeMap[mtModels[i].source] = mtModels[i].source_name;
+		langNameMap[mtModels[i].source_name] = mtModels[i].source;
+      }
+      if (2 == mtModels[i].target.length) { // ignore mapping from long codes
+      	//console.log("storring mapping from "+mtModels[i].target+" to "+mtModels[i].target_name);
+		langCodeMap[mtModels[i].target] = mtModels[i].target_name;
+		langNameMap[mtModels[i].target_name] = mtModels[i].target;
+      }
+
+      // Add the source language to our sttModels (if we never saw them before)
+      var source = mtModels[i].source.substring(0,2);
+      var existing = sttModelMap[source];
+      if (existing) {
+      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+mtModels[i].model_id);
+      } else {
+        //console.log("Adding "+source+" as a source language "+sttModels.length);
+        sttModelMap[source]=sttModels.length;
+        sttModels[sttModels.length] = {};
+        sttModels[sttModels.length-1].language = source+"-"+source.toUpperCase();
+        sttModels[sttModels.length-1].name = source+"-"+source.toUpperCase()+"_NonModel";
+        sttModels[sttModels.length-1].description = mtModels[i].source_name + " (typing)";
+      }
+
+      // Add to the transLangs structure
+   	  var target =  mtModels[i].target.substring(0,2); // ignore longer codes
+      if (!transLangs[source]) {
+      	// the first time we saw this source language
+      	transLangs[source] = {};
+        transLangs[source][target] = mtModels[i].model_id;
+      } else {
+      	// existing source language - check have we seen this target before?
+      	var existingModel = transLangs[source][target];
+      	if (!existingModel) {
+            transLangs[source][target] = mtModels[i].model_id;
+      	} else {
+	      	// This is a language pair for which we have a  model
+	      	// choose the model with the longest name unless one of the models contains '-patent'
+	      	if (-1 !== existingModel.indexOf('-patent')) {
+	      		console.log("using "+mtModels[i].model_id+" in preference to Patent model "+existingModel);
+	      		transLangs[source][target] = mtModels[i].model_id;
+	      	} else if (mtModels[i].model_id > existingModel.length) {
+	      		console.log("using longer "+mtModels[i].model_id+" in preference to e4xisting "+existingModel);
+	      		transLangs[source][target] = mtModels[i].model_id;
+	      	}
+      	}
+      }
+    }
+
+    // Sort the STT models so they look nice in the list
+    sttModels.sort(function (a, b){
+    	var nameA=a.description || "";
+    	var nameB=b.description || "";
+    	if (nameA < nameB) //sort string ascending
+    		return -1;
+    	if (nameA > nameB)
+    		return 1;
+    	return 0; //default return value (no sorting)
+    });
+
+    // store transLangs in a global structure since local storage isn't working
+    window.mtLangMap = transLangs;
+    // Save models to localstorage - is this needed anymore??
+    localStorage.setItem('mtModels', JSON.stringify(mtModels));
+    // TODO BOD rename global variable models to sttModels
+    localStorage.setItem('models', JSON.stringify(sttModels));
+    localStorage.setItem('langNameMap', JSON.stringify(langNameMap));
+    localStorage.setItem('langCodeMap', JSON.stringify(langCodeMap));
+
+    // Set default current model
+    localStorage.setItem('currentModel', 'en-US_BroadbandModel');
+    localStorage.setItem('sessionPermissions', 'true');
+
+
+    var viewContext = {
+      currentModel: 'en-US_BroadbandModel',
+      models:  sttModels,
+      token: token,
+      bufferSize: BUFFERSIZE
+    };
+
+    initViews(viewContext);
+
+  }
+
+  modelRequest.send();
+}
+
 $(document).ready(function() {
 
   // Make call to API to try and get token
@@ -504,22 +618,7 @@ $(document).ready(function() {
       console.error('Attempting to reconnect...');
     }
 
-    var viewContext = {
-      currentModel: 'en-US_BroadbandModel',
-      models: models,
-      token: token,
-      bufferSize: BUFFERSIZE
-    };
-
-    initViews(viewContext);
-
-    // Save models to localstorage
-    localStorage.setItem('models', JSON.stringify(models));
-
-    // Set default current model
-    localStorage.setItem('currentModel', 'en-US_BroadbandModel');
-    localStorage.setItem('sessionPermissions', 'true');
-
+    getServerModels(token);
 
     $.subscribe('clearscreen', function() {
       $('#resultsText').text('');
@@ -920,6 +1019,7 @@ function TTS(textToSynthesize) {
 }
 
 function getTargetLanguageCode() {
+	// TODO BOD - change to use info from mtModels
 	var lang = $('#dropdownMenuTargetLanguageDefault').text();
 	var mt_target = 'en'; // default
 	if( lang == 'English' )
@@ -1689,25 +1789,51 @@ exports.initSelectModel = function(ctx) {
   });
 
   function onChooseTargetLanguageClick() {
+  	// TODO BOD change to use models returned by the server
   	var currentModel = localStorage.getItem('currentModel') || 'en-US_BroadbandModel';
-	var list = $("#dropdownMenuTargetLanguage");
-	list.empty();
-	if(currentModel == 'en-US_BroadbandModel') {
-    list.append("<li role='presentation'><a role='menuitem' tabindex='0'>French</a></li>");
-    list.append("<li role='presentation'><a role='menuitem' tabindex='0'>German</a></li>");
-		list.append("<li role='presentation'><a role='menuitem' tabindex='1'>Portuguese</a></li>");
-		list.append("<li role='presentation'><a role='menuitem' tabindex='2'>Spanish</a></li>");
-	}
-	else if(currentModel == 'ar-AR_BroadbandModel') {
-		list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-	}
-	else if(currentModel == 'es-ES_BroadbandModel') {
-		list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-	}
-	else if(currentModel == 'pt-BR_BroadbandModel') {
-		list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-	}
+  	var currSource = currentModel.substring(0,2);
 
+  	// clear the current drop down list contents
+  	var list = $("#dropdownMenuTargetLanguage");
+  	list.empty();
+
+    var langCodeMap = JSON.parse(localStorage.getItem('langCodeMap'));
+    var langNameMap = JSON.parse(localStorage.getItem('langNameMap'));
+
+    var transLangs =  window.mtLangMap;
+    var targetLangCodes = transLangs[currSource];
+    console.log("Building a list of possible target languages when source="+currSource);
+    for (var key in targetLangCodes) {
+      var possibleTargets = targetLangCodes[key];
+      var targetName = langCodeMap[key];
+      console.log("If we choise target "+targetName+" the matching model is "+JSON.stringify(possibleTargets));
+      list.append("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
+    }
+
+    // targetLangCodes.forEach(function (elem, index, arr) {
+    //   console.log("Iterated at index "+index+" to find "+elem);
+    // });
+    // for (var idx in targetLangCodes) {
+    //   var thisLangCodes = targetLangCodes[idx];
+    //   var coode = 'pt';
+    //   console.log("we can translate from "+currSource+" to "+code+"("+langCodeMap[code]+")");
+    // }
+
+    // old code with fixed languages
+    // if(currentModel == 'en-US_BroadbandModel') {
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>French</a></li>");
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='1'>Portuguese</a></li>");
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='2'>Spanish</a></li>");
+  	// }
+  	// else if(currentModel == 'ar-AR_BroadbandModel') {
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
+  	// }
+  	// else if(currentModel == 'es-ES_BroadbandModel') {
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
+  	// }
+  	// else if(currentModel == 'pt-BR_BroadbandModel') {
+  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
+    // }
   }
 
   $("#dropdownMenuList").click(function(evt) {
@@ -1717,12 +1843,12 @@ exports.initSelectModel = function(ctx) {
     var newModelDescription = $(evt.target).text();
     var newModel = $(evt.target).data('model');
     $('#dropdownMenuDefault').empty().text(newModelDescription);
-	$('#dropdownMenuTargetLanguageDefault').text("Choose Target Language");
-	$("#dropdownMenuTargetLanguage").empty();
+    $('#dropdownMenuTargetLanguageDefault').text("Choose Target Language");
+    $("#dropdownMenuTargetLanguage").empty();
     $('#dropdownMenu1').dropdown('toggle');
     localStorage.setItem('currentModel', newModel);
 
-	// HACK: just for now because these 3 source languages have only 1 target language, which is English
+	// TODO BOD eliminate this HACK: just for now because these 3 source languages have only 1 target language, which is English
 	if( newModel == "ar-AR_BroadbandModel" ||
     newModel == "pt-BR_BroadbandModel" ||
     newModel == "de-DE_NonModel" ||
@@ -1743,16 +1869,17 @@ exports.initSelectModel = function(ctx) {
 	onChooseTargetLanguageClick();
   });
 
-  function isSelectedlanguageValid(lang) {
-	if(lang == "English" || lang == "French" || lang == 'German' || lang == "Spanish" || lang == "Portuguese")
-		return true;
-	return false;
-  }
+  // Not really needed since you pick a language from a drop-down
+  //function isSelectedlanguageValid(lang) {
+	// if(lang == "English" || lang == "French" || lang == 'German' || lang == "Spanish" || lang == "Portuguese")
+	// 	return true;
+	// return false;
+  // }
 
   $("#dropdownMenuTargetLanguage").click(function(evt) {
     var lang = $(evt.target).text();
-	if(isSelectedlanguageValid(lang) == false) return;
-	$('#dropdownMenuTargetLanguageDefault').text(lang);
+    //if(isSelectedlanguageValid(lang) == false) return;
+    $('#dropdownMenuTargetLanguageDefault').text(lang);
     console.log('Changed target language to ', lang);
   });
 
