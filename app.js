@@ -24,6 +24,7 @@ var express = require('express'),
     watson = require('watson-developer-cloud'),
     path = require('path'),
     fs = require('fs'),
+    ISO6391 = require('iso-639-1'),
     extend = require('util')._extend;
 
 // Setup static public directory
@@ -85,7 +86,7 @@ if (authorization) {
 
 // Get token from Watson using your credentials
 app.get('/token', function(req, res) {
-  console.log ("Getting a token with credentials "+JSON.stringify(stt_credentials));
+  //console.log ("Getting a token with credentials "+JSON.stringify(stt_credentials));
   authorization.getToken({url: stt_credentials.url}, function(err, token) {
     if (err) {
       console.log('getToken error:', err);
@@ -130,6 +131,29 @@ app.post('/api/translate', function(req, res, next) {
   //   res.json(models);
   // });
 });
+
+app.get('/api/models', function(req, res, next) {
+  var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
+
+  console.log('getting a list of translation models');
+  language_translation.getModels(params, function(err, models) {
+    if (err) {
+      return next(err);
+    } else {
+      var mtModels = models.models;
+      //console.log("Original JSON: "+JSON.stringify(mtModels));
+      for (var i=0; i<mtModels.length; i++) {
+        mtModels[i].source_name = ISO6391.getName(mtModels[i].source);
+        mtModels[i].target_name = ISO6391.getName(mtModels[i].target);
+        //console.log(i+": Translate "+mtModels[i].source_name+" to "+mtModels[i].target_name+" with model "+mtModels[i].model_id);
+      }
+      //console.log("Enhanced JSON: "+JSON.stringify(mtModels));
+      console.log("returning "+mtModels.length+" MT models");
+      res.json(mtModels);
+    }
+  });
+});
+
 // ----------------------------------------------------------------------
 
 // L.R.
