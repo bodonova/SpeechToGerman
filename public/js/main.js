@@ -20,7 +20,6 @@
 // global variables
 window.audioIn = null;
 window.baseString = '';
-window.mtLangMap = null;
 
 var utils = require('./utils');
 /**
@@ -576,10 +575,8 @@ function getServerModels(token) {
     	return 0; //default return value (no sorting)
     });
 
-    // store transLangs in a global structure since local storage isn't working
-    window.mtLangMap = transLangs;
-    // Save models to localstorage - is this needed anymore??
-    localStorage.setItem('mtModels', JSON.stringify(mtModels));
+    // Save parsed info to localstorage so they are useable elsewhere
+    localStorage.setItem('transLangs', JSON.stringify(transLangs));
     // TODO BOD rename global variable models to sttModels
     localStorage.setItem('models', JSON.stringify(sttModels));
     localStorage.setItem('langNameMap', JSON.stringify(langNameMap));
@@ -1800,40 +1797,21 @@ exports.initSelectModel = function(ctx) {
     var langCodeMap = JSON.parse(localStorage.getItem('langCodeMap'));
     var langNameMap = JSON.parse(localStorage.getItem('langNameMap'));
 
-    var transLangs =  window.mtLangMap;
+    var transLangs = JSON.parse(localStorage.getItem('transLangs'));
     var targetLangCodes = transLangs[currSource];
     console.log("Building a list of possible target languages when source="+currSource);
+    var listItems = new Array();
     for (var key in targetLangCodes) {
       var possibleTargets = targetLangCodes[key];
       var targetName = langCodeMap[key];
       console.log("If we choise target "+targetName+" the matching model is "+JSON.stringify(possibleTargets));
-      list.append("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
+      //list.append("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
+      listItems.push("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
     }
-
-    // targetLangCodes.forEach(function (elem, index, arr) {
-    //   console.log("Iterated at index "+index+" to find "+elem);
-    // });
-    // for (var idx in targetLangCodes) {
-    //   var thisLangCodes = targetLangCodes[idx];
-    //   var coode = 'pt';
-    //   console.log("we can translate from "+currSource+" to "+code+"("+langCodeMap[code]+")");
-    // }
-
-    // old code with fixed languages
-    // if(currentModel == 'en-US_BroadbandModel') {
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>French</a></li>");
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='1'>Portuguese</a></li>");
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='2'>Spanish</a></li>");
-  	// }
-  	// else if(currentModel == 'ar-AR_BroadbandModel') {
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-  	// }
-  	// else if(currentModel == 'es-ES_BroadbandModel') {
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-  	// }
-  	// else if(currentModel == 'pt-BR_BroadbandModel') {
-  	// 	list.append("<li role='presentation'><a role='menuitem' tabindex='0'>English</a></li>");
-    // }
+    listItems.sort();
+    for (var i in listItems) {
+      list.append(listItems[i])
+    }
   }
 
   $("#dropdownMenuList").click(function(evt) {
