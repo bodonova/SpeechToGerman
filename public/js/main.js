@@ -491,7 +491,9 @@ function getServerModels(token) {
 
   modelRequest.onload = function(evt) {
     //console.log("response to "+url+ ": "+modelRequest.responseText);
-	var mtModels = JSON.parse(modelRequest.responseText);
+    var combinedModels = JSON.parse(modelRequest.responseText);
+    var old_models = combinedModels.old;
+    var nmtModels = combinedModels.nmt;
 
     // turn sttModels array into map for easy lookup table
     var sttModelMap = {};
@@ -507,60 +509,107 @@ function getServerModels(token) {
       }
     }
 
-    // Iterate through the mtModels and see if we can translate from languages not on our sstModel liste
-    var transLangs = {};
+    // Iterate through the various translation models and see if we can translate from languages not on our sstModel liste
+    var transLangs = {};  // A structure to store the model_ids for each lanugage pair
+    var usesNMT = {};     // Track which language pairs have models that use NMT
     var langCodeMap = {}; // at same time build a map of language code to name
     var langNameMap = {}; // at same time build a map of language name to code
-    for (var i=0; i<mtModels.length; i++) {
+
+    // First iterate through the NMT models because we prefver to use these if they existing
+    for (var i=0; i<nmtModels.length; i++) {
 
       // Track the language code to name mappings (handy to know)
-      if (2 == mtModels[i].source.length) { // ignore mapping from long codes
-      	//console.log("storring mapping from "+mtModels[i].source+" to "+mtModels[i].source_name);
-		langCodeMap[mtModels[i].source] = mtModels[i].source_name;
-		langNameMap[mtModels[i].source_name] = mtModels[i].source;
+      if (2 == nmtModels[i].source.length) { // ignore mapping from long codes
+        //console.log("storring mapping from "+nmtModels[i].source+" to "+nmtModels[i].source_name);
+        langCodeMap[nmtModels[i].source] = nmtModels[i].source_name;
+        langNameMap[nmtModels[i].source_name] = nmtModels[i].source;
       }
-      if (2 == mtModels[i].target.length) { // ignore mapping from long codes
-      	//console.log("storring mapping from "+mtModels[i].target+" to "+mtModels[i].target_name);
-		langCodeMap[mtModels[i].target] = mtModels[i].target_name;
-		langNameMap[mtModels[i].target_name] = mtModels[i].target;
+      if (2 == nmtModels[i].target.length) { // ignore mapping from long codes
+        //console.log("storring mapping from "+nmtModels[i].target+" to "+nmtModels[i].target_name);
+        langCodeMap[nmtModels[i].target] = nmtModels[i].target_name;
+        langNameMap[nmtModels[i].target_name] = nmtModels[i].target;
       }
 
       // Add the source language to our sttModels (if we never saw them before)
-      var source = mtModels[i].source.substring(0,2);
+      var source = nmtModels[i].source.substring(0,2);
       var existing = sttModelMap[source];
       if (existing) {
-      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+mtModels[i].model_id);
+      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+nmtModels[i].model_id);
       } else {
         //console.log("Adding "+source+" as a source language "+sttModels.length);
         sttModelMap[source]=sttModels.length;
         sttModels[sttModels.length] = {};
         sttModels[sttModels.length-1].language = source+"-"+source.toUpperCase();
         sttModels[sttModels.length-1].name = source+"-"+source.toUpperCase()+"_NonModel";
-        sttModels[sttModels.length-1].description = mtModels[i].source_name + " (typing)";
+        sttModels[sttModels.length-1].description = nmtModels[i].source_name + " (typing)";
       }
 
       // Add to the transLangs structure
-   	  var target =  mtModels[i].target.substring(0,2); // ignore longer codes
+   	  var target =  nmtModels[i].target.substring(0,2); // ignore longer codes
+      if (!transLangs[source]) {
+      	// the first time we saw this source language create the sub-structure
+      	transLangs[source] = {};
+        usesNMT[source] = {};
+      }
+      transLangs[source][target] = nmtModels[i].model_id;
+      usesNMT[source][target] = true;
+    }
+
+    // Now look at the old models
+    for (var i=0; i<old_models.length; i++) {
+
+      // Track the language code to name mappings (handy to know)
+      if (2 == old_models[i].source.length) { // ignore mapping from long codes
+        //console.log("storring mapping from "+old_models[i].source+" to "+old_models[i].source_name);
+        langCodeMap[old_models[i].source] = old_models[i].source_name;
+        langNameMap[old_models[i].source_name] = old_models[i].source;
+      }
+      if (2 == old_models[i].target.length) { // ignore mapping from long codes
+        //console.log("storring mapping from "+old_models[i].target+" to "+old_models[i].target_name);
+        langCodeMap[old_models[i].target] = old_models[i].target_name;
+        langNameMap[old_models[i].target_name] = old_models[i].target;
+      }
+
+      // Add the source language to our sttModels (if we never saw them before)
+      var source = old_models[i].source.substring(0,2);
+      var existing = sttModelMap[source];
+      if (existing) {
+      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+old_models[i].model_id);
+      } else {
+        //console.log("Adding "+source+" as a source language "+sttModels.length);
+        sttModelMap[source]=sttModels.length;
+        sttModels[sttModels.length] = {};
+        sttModels[sttModels.length-1].language = source+"-"+source.toUpperCase();
+        sttModels[sttModels.length-1].name = source+"-"+source.toUpperCase()+"_NonModel";
+        sttModels[sttModels.length-1].description = old_models[i].source_name + " (typing)";
+      }
+
+      // Add to the transLangs structure
+   	  var target =  old_models[i].target.substring(0,2); // ignore longer codes
       if (!transLangs[source]) {
       	// the first time we saw this source language
       	transLangs[source] = {};
-        transLangs[source][target] = mtModels[i].model_id;
+        transLangs[source][target] = old_models[i].model_id;
+        usesNMT[source][target] = false;
       } else {
       	// existing source language - check have we seen this target before?
       	var existingModel = transLangs[source][target];
       	if (!existingModel) {
-            transLangs[source][target] = mtModels[i].model_id;
-      	} else {
-	      	// This is a language pair for which we have a  model
-	      	// choose the model with the longest name unless one of the models contains '-patent'
-	      	if (-1 !== existingModel.indexOf('-patent')) {
-	      		console.log("using "+mtModels[i].model_id+" in preference to Patent model "+existingModel);
-	      		transLangs[source][target] = mtModels[i].model_id;
-	      	} else if (mtModels[i].model_id > existingModel.length) {
-	      		console.log("using longer "+mtModels[i].model_id+" in preference to e4xisting "+existingModel);
-	      		transLangs[source][target] = mtModels[i].model_id;
-	      	}
+            transLangs[source][target] = old_models[i].model_id;
+            usesNMT[source][target] = false;
       	}
+        // obsolete logic - new rule is to favour the NMT
+        // else {
+	      // 	// This is a language pair for which we have a  model
+	      // 	// choose the model with the longest name unless one of the models contains '-patent'
+	      // 	if (-1 !== existingModel.indexOf('-patent')) {
+	      // 		console.log("using "+old_models[i].model_id+" in preference to Patent model "+existingModel);
+	      // 		transLangs[source][target] = old_models[i].model_id;
+	      // 	} else if (old_models[i].model_id > existingModel.length) {
+	      // 		console.log("using longer "+old_models[i].model_id+" in preference to e4xisting "+existingModel);
+	      // 		transLangs[source][target] = old_models[i].model_id;
+	      // 	}
+      	// }
       }
     }
 
@@ -577,6 +626,7 @@ function getServerModels(token) {
 
     // Save parsed info to localstorage so they are useable elsewhere
     localStorage.setItem('transLangs', JSON.stringify(transLangs));
+    localStorage.setItem('usesNMT', JSON.stringify(usesNMT));
     // TODO BOD rename global variable models to sttModels
     localStorage.setItem('models', JSON.stringify(sttModels));
     localStorage.setItem('langNameMap', JSON.stringify(langNameMap));
@@ -1016,20 +1066,11 @@ function TTS(textToSynthesize) {
 }
 
 function getTargetLanguageCode() {
-	// TODO BOD - change to use info from mtModels
-	var lang = $('#dropdownMenuTargetLanguageDefault').text();
-	var mt_target = 'en'; // default
-	if( lang == 'English' )
-	    mt_target = 'en';
-  else if( lang == 'French' )
-	    mt_target = 'fr';
-  else if( lang == 'German' )
-	    mt_target = 'de';
-	else if( lang == 'Spanish' )
-	    mt_target = 'es';
-	else if( lang == 'Portuguese' )
-	    mt_target = 'pt';
-	return mt_target;
+	var langName = $('#dropdownMenuTargetLanguageDefault').text();
+    var langNameMap = JSON.parse(localStorage.getItem('langNameMap'));
+    var langCode = langNameMap[langName];
+    console.log("Target language is "+langName+" has code "+langCode);
+	return langCode;
 }
 
 function translate(textContent) {
@@ -1041,14 +1082,18 @@ function translate(textContent) {
 	var lang = $('#dropdownMenuTargetLanguageDefault').text();
 	var mt_target = getTargetLanguageCode();
 
+    var transLangs = JSON.parse(localStorage.getItem('transLangs'));
+    var usesNMT =  JSON.parse(localStorage.getItem('usesNMT'));
 	// call language translation service if mt_source != mt_target, otherwise jump to TTS
 	if(mt_source != mt_target) {
-		var mid = mt_source + "-" + mt_target; // default domain is 'news'
-    // if (mt_source == 'de' || mt_target == 'de')
-	  //   mid += "-conversational";
+		//var mid = mt_source + "-" + mt_target; // default domain is 'news'
+      var uses_mt = usesNMT[mt_source][mt_target];
+      var model_id = transLangs[mt_source][mt_target];
+      console.log("Model "+model_id+" selected to translate from "+mt_source+" to "+mt_target+" neural net MT "+uses_mt);
 
 		var callData = {
-			model_id: mid,
+		    uses_mt: uses_mt,
+			model_id: model_id,
 			text: textContent
 		};
 
@@ -1067,7 +1112,12 @@ function translate(textContent) {
 		$.ajax(restAPICall)
 			.done(function(data) {
         console.log ('data: '+JSON.stringify(data));
-				var translation = data['translations'][0]['translation'];
+        var translation = data['error_message'];
+        if (translation) {
+          translation = "ERROR: "+translation;
+        } else {
+          translation = data['translations'][0]['translation'];
+        }
 				$('#translation textarea').val(function(_, val){
 				    var delimiter = val.length > 0 ? ". " : "";
 					return val + delimiter + translation;
@@ -1821,18 +1871,11 @@ exports.initSelectModel = function(ctx) {
     var newModelDescription = $(evt.target).text();
     var newModel = $(evt.target).data('model');
     $('#dropdownMenuDefault').empty().text(newModelDescription);
-    $('#dropdownMenuTargetLanguageDefault').text("Choose Target Language");
+    //$('#dropdownMenuTargetLanguageDefault').text("Choose Target Language");
+    $('#dropdownMenuTargetLanguageDefault').text("English");
     $("#dropdownMenuTargetLanguage").empty();
     $('#dropdownMenu1').dropdown('toggle');
     localStorage.setItem('currentModel', newModel);
-
-	// TODO BOD eliminate this HACK: just for now because these 3 source languages have only 1 target language, which is English
-	if( newModel == "ar-AR_BroadbandModel" ||
-    newModel == "pt-BR_BroadbandModel" ||
-    newModel == "de-DE_NonModel" ||
-		newModel == "es-ES_BroadbandModel") {
-		$('#dropdownMenuTargetLanguageDefault').text("English");
-	}
 
     ctx.currentModel = newModel;
     initPlaySample(ctx);

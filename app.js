@@ -24,6 +24,7 @@ var express = require('express'),
     watson = require('watson-developer-cloud'),
     path = require('path'),
     fs = require('fs'),
+    unirest = require('unirest'),
     ISO6391 = require('iso-639-1'),
     extend = require('util')._extend;
 
@@ -108,15 +109,14 @@ var language_translation = watson.language_translation(mt_credentials);
 app.post('/api/translate', function(req, res, next) {
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
   console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
-
-  // Hack to get NMT model Called BOD
-  var unirest = require('unirest');
-  var nmt_url = mt_credentials.url + '/v2/translate?version=2017-07-01';
-  console.log(' ---> hack URL '+nmt_url+' param '+JSON.stringify(params));
-  unirest.post(nmt_url)
-  .header('Accept', 'application/json')
-  .header('X-Watson-Technology-Preview','2017-07-01')
-  .auth(mt_credentials.username, mt_credentials.password, true)
+  var uses_mt = req.body.uses_mt;
+  console.log('uses_mt = '+uses_mt);
+  var url = mt_credentials.url;
+  if (uses_mt) url += '/v2/translate?version=2017-07-01';
+  console.log(' ---> translation URL '+url+' param '+JSON.stringify(params));
+  var ur = unirest.post(url).header('Accept', 'application/json');
+  if (uses_mt) ur = ur.header('X-Watson-Technology-Preview','2017-07-01');
+  ur.auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
     console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
@@ -133,25 +133,69 @@ app.post('/api/translate', function(req, res, next) {
 });
 
 app.get('/api/models', function(req, res, next) {
-  var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
-
   console.log('getting a list of translation models');
-  language_translation.getModels(params, function(err, models) {
-    if (err) {
-      return next(err);
-    } else {
-      var mtModels = models.models;
-      //console.log("Original JSON: "+JSON.stringify(mtModels));
-      for (var i=0; i<mtModels.length; i++) {
-        mtModels[i].source_name = ISO6391.getName(mtModels[i].source);
-        mtModels[i].target_name = ISO6391.getName(mtModels[i].target);
-        //console.log(i+": Translate "+mtModels[i].source_name+" to "+mtModels[i].target_name+" with model "+mtModels[i].model_id);
-      }
-      //console.log("Enhanced JSON: "+JSON.stringify(mtModels));
-      console.log("returning "+mtModels.length+" MT models");
-      res.json(mtModels);
+
+  // get both the original MT models list and the new Neural MT type mtModels
+  var models_url = mt_credentials.url + '/v2/models?version=2017-07-01';
+  //console.log(' ---> get NMT models URL '+models_url);
+  unirest.get(models_url)
+  .header('Accept', 'application/json')
+  .header('X-Watson-Technology-Preview','2017-07-01')
+  .auth(mt_credentials.username, mt_credentials.password, true)
+  .send()
+  .end(function (response) {
+    //console.log(' ---> NMT models response code: '+response.code+' JSON: '+JSON.stringify(response.body));
+    var nmt_models = response.body.models;
+    // Get the name of each source/target language (it is easier done ofn the server)
+    for (var i=0; i<nmt_models.length; i++) {
+      nmt_models[i].source_name = ISO6391.getName(nmt_models[i].source);
+      nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
+      //console.log(" NMT model "+i+": Translate "+nmt_models[i].source_name+" to "+nmt_models[i].target_name+" with model "+nmt_models[i].model_id);
     }
+
+    // now fetch the old style models
+    models_url = mt_credentials.url + '/v2/models';
+    //console.log(' ---> get old models URL '+models_url);
+    unirest.get(models_url)
+    .header('Accept', 'application/json')
+    .auth(mt_credentials.username, mt_credentials.password, true)
+    .send()
+    .end(function (response) {
+      //console.log(' ---> Old MT models response code: '+response.code+' JSON: '+JSON.stringify(response.body));
+      // Get the name of each source/target language (it is easier done ofn the server)
+      var old_models = response.body.models;
+      for (var i=0; i<old_models.length; i++) {
+        old_models[i].source_name = ISO6391.getName(old_models[i].source);
+        old_models[i].target_name = ISO6391.getName(old_models[i].target);
+        //console.log("old model "+i+": Translate "+old_models[i].source_name+" to "+old_models[i].target_name+" with model "+old_models[i].model_id);
+      }
+
+      // combine both and return
+      var combined = {};
+      combined.nmt = nmt_models;
+      combined.old = old_models;
+      res.json(combined);
+    });
   });
+
+
+  // The official way of doing it
+  // language_translation.getModels(params, function(err, models) {
+  //   if (er) {
+  //     return next(err);
+  //   } else {
+  //     var mtModels = models.models;
+  //     //console.log("Original JSON: "+JSON.stringify(mtModels));
+  //     for (var i=0; i<mtModels.length; i++) {
+  //       mtModels[i].source_name = ISO6391.getName(mtModels[i].source);
+  //       mtModels[i].target_name = ISO6391.getName(mtModels[i].target);
+  //       //console.log(i+": Translate "+mtModels[i].source_name+" to "+mtModels[i].target_name+" with model "+mtModels[i].model_id);
+  //     }
+  //     //console.log("Enhanced JSON: "+JSON.stringify(mtModels));
+  //     console.log("returning "+mtModels.length+" MT models");
+  //     res.json(mtModels);
+  //   }
+  // });
 });
 
 // ----------------------------------------------------------------------
