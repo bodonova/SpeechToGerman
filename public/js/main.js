@@ -491,9 +491,7 @@ function getServerModels(token) {
 
   modelRequest.onload = function(evt) {
     //console.log("response to "+url+ ": "+modelRequest.responseText);
-    var combinedModels = JSON.parse(modelRequest.responseText);
-    var old_models = combinedModels.old;
-    var nmtModels = combinedModels.nmt;
+    var nmtModels = JSON.parse(modelRequest.responseText);
 
     // turn sttModels array into map for easy lookup table
     var sttModelMap = {};
@@ -511,11 +509,10 @@ function getServerModels(token) {
 
     // Iterate through the various translation models and see if we can translate from languages not on our sstModel liste
     var transLangs = {};  // A structure to store the model_ids for each lanugage pair
-    var usesNMT = {};     // Track which language pairs have models that use NMT
     var langCodeMap = {}; // at same time build a map of language code to name
     var langNameMap = {}; // at same time build a map of language name to code
 
-    // First iterate through the NMT models because we prefver to use these if they existing
+    // Iterate through the NMT models and add to our arracy of arrays
     for (var i=0; i<nmtModels.length; i++) {
 
       // Track the language code to name mappings (handy to know)
@@ -549,68 +546,8 @@ function getServerModels(token) {
       if (!transLangs[source]) {
       	// the first time we saw this source language create the sub-structure
       	transLangs[source] = {};
-        usesNMT[source] = {};
       }
       transLangs[source][target] = nmtModels[i].model_id;
-      usesNMT[source][target] = true;
-    }
-
-    // Now look at the old models
-    for (var i=0; i<old_models.length; i++) {
-
-      // Track the language code to name mappings (handy to know)
-      if (2 == old_models[i].source.length) { // ignore mapping from long codes
-        //console.log("storring mapping from "+old_models[i].source+" to "+old_models[i].source_name);
-        langCodeMap[old_models[i].source] = old_models[i].source_name;
-        langNameMap[old_models[i].source_name] = old_models[i].source;
-      }
-      if (2 == old_models[i].target.length) { // ignore mapping from long codes
-        //console.log("storring mapping from "+old_models[i].target+" to "+old_models[i].target_name);
-        langCodeMap[old_models[i].target] = old_models[i].target_name;
-        langNameMap[old_models[i].target_name] = old_models[i].target;
-      }
-
-      // Add the source language to our sttModels (if we never saw them before)
-      var source = old_models[i].source.substring(0,2);
-      var existing = sttModelMap[source];
-      if (existing) {
-      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+old_models[i].model_id);
-      } else {
-        //console.log("Adding "+source+" as a source language "+sttModels.length);
-        sttModelMap[source]=sttModels.length;
-        sttModels[sttModels.length] = {};
-        sttModels[sttModels.length-1].language = source+"-"+source.toUpperCase();
-        sttModels[sttModels.length-1].name = source+"-"+source.toUpperCase()+"_NonModel";
-        sttModels[sttModels.length-1].description = old_models[i].source_name + " (typing)";
-      }
-
-      // Add to the transLangs structure
-   	  var target =  old_models[i].target.substring(0,2); // ignore longer codes
-      if (!transLangs[source]) {
-      	// the first time we saw this source language
-      	transLangs[source] = {};
-        transLangs[source][target] = old_models[i].model_id;
-        usesNMT[source][target] = false;
-      } else {
-      	// existing source language - check have we seen this target before?
-      	var existingModel = transLangs[source][target];
-      	if (!existingModel) {
-            transLangs[source][target] = old_models[i].model_id;
-            usesNMT[source][target] = false;
-      	}
-        // obsolete logic - new rule is to favour the NMT
-        // else {
-	      // 	// This is a language pair for which we have a  model
-	      // 	// choose the model with the longest name unless one of the models contains '-patent'
-	      // 	if (-1 !== existingModel.indexOf('-patent')) {
-	      // 		console.log("using "+old_models[i].model_id+" in preference to Patent model "+existingModel);
-	      // 		transLangs[source][target] = old_models[i].model_id;
-	      // 	} else if (old_models[i].model_id > existingModel.length) {
-	      // 		console.log("using longer "+old_models[i].model_id+" in preference to e4xisting "+existingModel);
-	      // 		transLangs[source][target] = old_models[i].model_id;
-	      // 	}
-      	// }
-      }
     }
 
     // Sort the STT models so they look nice in the list
@@ -626,7 +563,6 @@ function getServerModels(token) {
 
     // Save parsed info to localstorage so they are useable elsewhere
     localStorage.setItem('transLangs', JSON.stringify(transLangs));
-    localStorage.setItem('usesNMT', JSON.stringify(usesNMT));
     // TODO BOD rename global variable models to sttModels
     localStorage.setItem('models', JSON.stringify(sttModels));
     localStorage.setItem('langNameMap', JSON.stringify(langNameMap));
@@ -1082,17 +1018,13 @@ function translate(textContent) {
 	var lang = $('#dropdownMenuTargetLanguageDefault').text();
 	var mt_target = getTargetLanguageCode();
 
-    var transLangs = JSON.parse(localStorage.getItem('transLangs'));
-    var usesNMT =  JSON.parse(localStorage.getItem('usesNMT'));
+  var transLangs = JSON.parse(localStorage.getItem('transLangs'));
 	// call language translation service if mt_source != mt_target, otherwise jump to TTS
 	if(mt_source != mt_target) {
-		//var mid = mt_source + "-" + mt_target; // default domain is 'news'
-      var uses_mt = usesNMT[mt_source][mt_target];
-      var model_id = transLangs[mt_source][mt_target];
-      console.log("Model "+model_id+" selected to translate from "+mt_source+" to "+mt_target+" neural net MT "+uses_mt);
+    var model_id = transLangs[mt_source][mt_target];
+    console.log("Model "+model_id+" selected to translate from "+mt_source+" to "+mt_target);
 
 		var callData = {
-		    uses_mt: uses_mt,
 			model_id: model_id,
 			text: textContent
 		};

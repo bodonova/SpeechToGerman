@@ -109,14 +109,11 @@ var language_translation = watson.language_translation(mt_credentials);
 app.post('/api/translate', function(req, res, next) {
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
   console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
-  var uses_mt = req.body.uses_mt;
-  console.log('uses_mt = '+uses_mt);
-  var url = mt_credentials.url;
-  if (uses_mt) url += '/v2/translate?version=2017-07-01';
+  var url = mt_credentials.url + '/v2/translate?version=2017-07-01';
   console.log(' ---> translation URL '+url+' param '+JSON.stringify(params));
-  var ur = unirest.post(url).header('Accept', 'application/json');
-  if (uses_mt) ur = ur.header('X-Watson-Technology-Preview','2017-07-01');
-  ur.auth(mt_credentials.username, mt_credentials.password, true)
+  unirest.post(url).header('Accept', 'application/json')
+  .header('X-Watson-Technology-Preview','2017-07-01')
+  .auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
     console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
@@ -152,32 +149,8 @@ app.get('/api/models', function(req, res, next) {
       nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
       //console.log(" NMT model "+i+": Translate "+nmt_models[i].source_name+" to "+nmt_models[i].target_name+" with model "+nmt_models[i].model_id);
     }
-
-    // now fetch the old style models
-    models_url = mt_credentials.url + '/v2/models';
-    //console.log(' ---> get old models URL '+models_url);
-    unirest.get(models_url)
-    .header('Accept', 'application/json')
-    .auth(mt_credentials.username, mt_credentials.password, true)
-    .send()
-    .end(function (response) {
-      //console.log(' ---> Old MT models response code: '+response.code+' JSON: '+JSON.stringify(response.body));
-      // Get the name of each source/target language (it is easier done ofn the server)
-      var old_models = response.body.models;
-      for (var i=0; i<old_models.length; i++) {
-        old_models[i].source_name = ISO6391.getName(old_models[i].source);
-        old_models[i].target_name = ISO6391.getName(old_models[i].target);
-        //console.log("old model "+i+": Translate "+old_models[i].source_name+" to "+old_models[i].target_name+" with model "+old_models[i].model_id);
-      }
-
-      // combine both and return
-      var combined = {};
-      combined.nmt = nmt_models;
-      combined.old = old_models;
-      res.json(combined);
-    });
+    res.json(nmt_models);
   });
-
 
   // The official way of doing it
   // language_translation.getModels(params, function(err, models) {
