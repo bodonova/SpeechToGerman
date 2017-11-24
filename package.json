@@ -11,7 +11,8 @@
     "http-proxy": "~1.11.1",
     "transformer-proxy": "~0.3.1",
     "watson-developer-cloud": "~0.9.19",
-    "unirest": "^0.5.1"
+    "unirest": "^0.5.1",
+    "iso-639-1":"^1.3.1"
   },
   "engines": {
     "node": "0.10.x"
@@ -53,7 +54,6 @@
   "devDependencies": {
     "browserify": "^10.2.4",
     "browserify-shim": "^3.8.9",
-    "watchify": "^3.2.3",
-    "iso-639-1":"^1.3.1"
+    "watchify": "^3.2.3"
   }
 }
