@@ -264,62 +264,161 @@ module.exports = Microphone;
 },{"./utils":7}],2:[function(require,module,exports){
 module.exports={
    "models": [
+      // {
+      //    "name": "pt-BR_NarrowbandModel",
+      //    "language": "pt-BR",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/pt-BR_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": false,
+      //       "speaker_labels": false
+      //    },
+      //    "description": "Brazilian Portuguese narrowband model."
+      // },
       {
-         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ar-AR_BroadbandModel",
+         "name": "fr-FR_BroadbandModel",
+         "language": "fr-FR",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/fr-FR_BroadbandModel",
          "rate": 16000,
+         "supported_features": {
+            "custom_language_model": false,
+            "speaker_labels": false
+         },
+         "description": "French"
+      },
+      // {
+      //    "name": "en-US_NarrowbandModel",
+      //    "language": "en-US",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": true,
+      //       "speaker_labels": true
+      //    },
+      //    "description": "US English narrowband model."
+      // },
+      // Give preference to US English
+      // {
+      //    "name": "en-GB_BroadbandModel",
+      //    "language": "en-GB",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-GB_BroadbandModel",
+      //    "rate": 16000,
+      //    "supported_features": {
+      //       "custom_language_model": false,
+      //       "speaker_labels": false
+      //    },
+      //    "description": "GB English broadband model."
+      // },
+      {
+         "name": "zh-CN_BroadbandModel",
+         "language": "zh-CN",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/zh-CN_BroadbandModel",
+         "rate": 16000,
+         "supported_features": {
+            "custom_language_model": false,
+            "speaker_labels": false
+         },
+         "description": "Mandarin Chinese"
+      },
+      {
+         "name": "ja-JP_BroadbandModel",
+         "language": "ja-JP",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ja-JP_BroadbandModel",
+         "rate": 16000,
+         "supported_features": {
+            "custom_language_model": true,
+            "speaker_labels": true
+         },
+         "description": "Japanese"
+      },
+      // {
+      //    "name": "en-GB_NarrowbandModel",
+      //    "language": "en-GB",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-GB_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": false,
+      //       "speaker_labels": false
+      //    },
+      //    "description": "GB English narrowband model."
+      // },
+      {
+         "name": "es-ES_BroadbandModel",
+         "language": "es-ES",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/es-ES_BroadbandModel",
+         "rate": 16000,
+         "supported_features": {
+            "custom_language_model": true,
+            "speaker_labels": true
+         },
+         "description": "Spanish"
+      },
+      {
          "name": "ar-AR_BroadbandModel",
          "language": "ar-AR",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ar-AR_BroadbandModel",
+         "rate": 16000,
+         "supported_features": {
+            "custom_language_model": false,
+            "speaker_labels": false
+         },
          "description": "Arabic"
       },
-	  {
-         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/pt-BR_BroadbandModel",
-         "rate": 16000,
+      // {
+      //    "name": "zh-CN_NarrowbandModel",
+      //    "language": "zh-CN",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/zh-CN_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": false,
+      //       "speaker_labels": false
+      //    },
+      //    "description": "Mandarin narrowband model."
+      // },
+      // {
+      //    "name": "ja-JP_NarrowbandModel",
+      //    "language": "ja-JP",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ja-JP_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": true,
+      //       "speaker_labels": true
+      //    },
+      //    "description": "Japanese narrowband model."
+      // },
+      // {
+      //    "name": "es-ES_NarrowbandModel",
+      //    "language": "es-ES",
+      //    "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/es-ES_NarrowbandModel",
+      //    "rate": 8000,
+      //    "supported_features": {
+      //       "custom_language_model": true,
+      //       "speaker_labels": true
+      //    },
+      //    "description": "Spanish narrowband model."
+      // },
+      {
          "name": "pt-BR_BroadbandModel",
          "language": "pt-BR",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/pt-BR_BroadbandModel",
+         "rate": 16000,
+         "supported_features": {
+            "custom_language_model": false,
+            "speaker_labels": false
+         },
          "description": "Brazilian Portuguese"
       },
       {
-         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_BroadbandModel",
-         "rate": 16000,
          "name": "en-US_BroadbandModel",
          "language": "en-US",
-         "description": "English" // "description": "US English broadband model (16KHz)"
-      },
-      //{
-      //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_NarrowbandModel",
-      //   "rate": 8000,
-      //   "name": "en-US_NarrowbandModel",
-      //   "language": "en-US",
-      //   "description": "US English narrowband model (8KHz)"
-      //},
-      {
-         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/es-ES_BroadbandModel",
+         "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/en-US_BroadbandModel",
          "rate": 16000,
-         "name": "es-ES_BroadbandModel",
-         "language": "es-ES",
-         "description": "Spanish" // "description": "Spanish broadband model (16KHz)"
-      },
-      //{
-      //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/es-ES_NarrowbandModel",
-      //   "rate": 8000,
-      //   "name": "es-ES_NarrowbandModel",
-      //   "language": "es-ES",
-      //   "description": "Spanish narrowband model (8KHz)"
-      //},
-      //{
-      //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ja-JP_BroadbandModel",
-      //   "rate": 16000,
-      //   "name": "ja-JP_BroadbandModel",
-      //   "language": "ja-JP",
-      //   "description": "Japanese broadband model (16KHz)"
-      //},
-      //{
-      //   "url": "https://stream.watsonplatform.net/speech-to-text/api/v1/models/ja-JP_NarrowbandModel",
-      //   "rate": 8000,
-      //   "name": "ja-JP_NarrowbandModel",
-      //   "language": "ja-JP",
-      //   "description": "Japanese narrowband model (8KHz)"
-      //}
+         "supported_features": {
+            "custom_language_model": true,
+            "speaker_labels": true
+         },
+         "description": "English"
+      }
    ]
 }
 
@@ -530,9 +629,7 @@ function getServerModels(token) {
       // Add the source language to our sttModels (if we never saw them before)
       var source = nmtModels[i].source.substring(0,2);
       var existing = sttModelMap[source];
-      if (existing) {
-      	//console.warn ("We already have a model for "+source+" at "+existing+" so no addition for "+nmtModels[i].model_id);
-      } else {
+      if (existing === undefined) {
         //console.log("Adding "+source+" as a source language "+sttModels.length);
         sttModelMap[source]=sttModels.length;
         sttModels[sttModels.length] = {};
@@ -979,6 +1076,7 @@ var initTextScroll = function() {
 // --------------------------------- MT & TTS ----------------------------------------
 function getVoice() {
 	var mt_target = getTargetLanguageCode();
+  //console.log("getting a voice for lang code "+mt_target);
 	var voice = '';
 	if(mt_target == 'en')
 		voice = 'en-US_MichaelVoice'; // TODO: try 'en-US_AllisonVoice' or 'en-US_LisaVoice'
@@ -989,15 +1087,23 @@ function getVoice() {
 	else if(mt_target == 'es')
 		voice = 'es-US_SofiaVoice';   // TODO: try 'es-ES_EnriqueVoice' or 'es-ES_LauraVoice'
 	else if(mt_target == 'pt')
-		voice = 'pt-BR_IsabelaVoice';
+	voice = 'pt-BR_IsabelaVoice';
+  else if(mt_target == 'ja')
+		voice = 'ja-JP_EmiVoice';
+  else if(mt_target == 'it')
+		voice = 'it-IT_FrancescaVoice';
+  else
+    voice = 'en-GB_KateVoice'; // default whenno model found
 	return voice;
 }
 
 function TTS(textToSynthesize) {
 	console.log('text to synthesize: ---> ' + textToSynthesize);
 	var voice = getVoice();
-	if(voice == '')
-		return;
+	if(voice == 'en-GB_KateVoice') {
+		textToSynthesize = 'We are currently unable to synthesize '+$('#dropdownMenuTargetLanguageDefault').text();
+    console.log("Changed text to: "+textToSynthesize);
+  }
 	synthesizeRequest(textToSynthesize, voice);
 }
 
@@ -1482,13 +1588,15 @@ var effects = require('./effects');
 
 var LOOKUP_TABLE = {
   'ar-AR_BroadbandModel': ['ar-AR_Broadband_sample1.wav', 'ar-AR_Broadband_sample2.wav'],
-  'en-US_BroadbandModel': ['Us_English_Broadband_Sample_1.wav', 'Us_English_Broadband_Sample_2.wav', 'AmericaFirst.wav', 'homer-balogna.wav'],
+  'en-US_BroadbandModel': ['AmericaFirst.wav', 'Us_English_Broadband_Sample_2.wav', 'Us_English_Broadband_Sample_1.wav', 'homer-balogna.wav'],
   'en-US_NarrowbandModel': ['Us_English_Narrowband_Sample_1.wav', 'Us_English_Narrowband_Sample_2.wav'],
   'es-ES_BroadbandModel': ['Es_ES_spk24_16khz.wav', 'Es_ES_spk19_16khz.wav'],
   'es-ES_NarrowbandModel': ['Es_ES_spk24_8khz.wav', 'Es_ES_spk19_8khz.wav'],
   'ja-JP_BroadbandModel': ['sample-Ja_JP-wide1.wav', 'sample-Ja_JP-wide2.wav'],
   'ja-JP_NarrowbandModel': ['sample-Ja_JP-narrow3.wav', 'sample-Ja_JP-narrow4.wav'],
-  'pt-BR_BroadbandModel': ['pt-BR_Sample1-16KHz.wav', 'pt-BR_Sample2-16KHz.wav']
+  'pt-BR_BroadbandModel': ['pt-BR_Sample1-16KHz.wav', 'pt-BR_Sample2-16KHz.wav'],
+  'fr-FR_BroadbandModel': ['fr-burke.wav', 'fr-grimm.wav'],
+  'zh-CN_BroadbandModel': ['zh-gospel.wav', 'zh-poem.wav']
 };
 
 var playSample = (function() {
@@ -1805,7 +1913,10 @@ exports.initSelectModel = function(ctx) {
     $('#dropdownMenuDefault').empty().text(newModelDescription);
     //$('#dropdownMenuTargetLanguageDefault').text("Choose Target Language");
     $('#dropdownMenuTargetLanguageDefault').text("English");
-    $("#dropdownMenuTargetLanguage").empty();
+    if (newModelDescription.includes('English'))
+      $("#dropdownMenuTargetLanguage").empty();
+    else
+      $("#dropdownMenuTargetLanguage").text('English')
     $('#dropdownMenu1').dropdown('toggle');
     localStorage.setItem('currentModel', newModel);
 
