@@ -3,6 +3,20 @@
 
   The application uses IBM's speech recognition, machine translation, and voice synthesis capabilities to instantly translate speech to another language and reads the translation aloud. This is heavily based on the https://github.com/leonrch/SpeechToSpeech sample (the only significant change is the addition of support for German and the switch to using the neural network model based machine translation)
 
+  This code is hosted on two instances of GIT. One is used for public perusal of the code and one is used as part of the deployment toolchain. If you are pushing changes to this project make sure to push it to both GUT repositories. Your environment will be automatically configured to push back changes to the repository that you originally cloned, but use one of the commands below:
+
+  ```sh
+  $ git add remote github git@github.com:bodonova/SpeechToGerman.git
+  $ git push -u github
+  ```
+
+  or
+
+  ```sh
+  $ git add remote bluemix git@git.ng.bluemix.net:brian_odonovan/speech-to-speech-app.git
+  $ git push -u bluemix
+  ```
+
 Give it a try! Click the button below to fork into IBM DevOps Services and deploy your own copy of this application on Bluemix.
 
 [![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=hhttps://github.com/bodonova/SpeechToGerman)
