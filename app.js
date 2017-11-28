@@ -116,8 +116,18 @@ app.post('/api/translate', function(req, res, next) {
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
-    console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
-    res.json(response.body);
+    if (response.error) {
+      console.log('new style call to get NMT models failed - try the old way');
+      language_translation.translate(params, function(err, models) {
+      if (err)
+        return next(err);
+      else
+        res.json(models);
+      });
+    } else {
+      console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
+      res.json(response.body);
+    }
   });
 
   // calling the official library
@@ -130,31 +140,56 @@ app.post('/api/translate', function(req, res, next) {
 });
 
 app.get('/api/models', function(req, res, next) {
-  console.log('getting a list of translation models');
+  console.log('Server is getting a list of translation model for a browser client');
 
   // get both the original MT models list and the new Neural MT type mtModels
   var models_url = mt_credentials.url + '/v2/models?version=2017-07-01';
-  //console.log(' ---> get NMT models URL '+models_url);
+  console.log(' ---> get NMT models URL '+models_url);
+  console.log ('user='+mt_credentials.username+" password="+mt_credentials.password)
   unirest.get(models_url)
   .header('Accept', 'application/json')
   .header('X-Watson-Technology-Preview','2017-07-01')
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send()
   .end(function (response) {
-    //console.log(' ---> NMT models response code: '+response.code+' JSON: '+JSON.stringify(response.body));
-    var nmt_models = response.body.models;
-    // Get the name of each source/target language (it is easier done ofn the server)
-    for (var i=0; i<nmt_models.length; i++) {
-      nmt_models[i].source_name = ISO6391.getName(nmt_models[i].source);
-      nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
-      //console.log(" NMT model "+i+": Translate "+nmt_models[i].source_name+" to "+nmt_models[i].target_name+" with model "+nmt_models[i].model_id);
+    console.log(' ---> NMT models response code: '+response.code+' JSON: '+JSON.stringify(response.body));
+    if (response.error) {
+        console.log('New style call to get models failed so try again the old way');
+        var params = {};
+        language_translation.getModels(params, function(err, models) {
+        if (err) {
+          console.log('old way failed also so give up')
+          return next(err);
+        } else {
+          console.log('Adding language names to returned JSON')
+          var mtModels = models.models;
+          //console.log("Original JSON: "+JSON.stringify(mtModels));
+          for (var i=0; i<mtModels.length; i++) {
+            mtModels[i].source_name = ISO6391.getName(mtModels[i].source);
+            mtModels[i].target_name = ISO6391.getName(mtModels[i].target);
+            //console.log(i+": Translate "+mtModels[i].source_name+" to "+mtModels[i].target_name+" with model "+mtModels[i].model_id);
+          }
+          //console.log("Enhanced JSON: "+JSON.stringify(mtModels));
+          console.log("returning "+mtModels.length+" MT models");
+          res.json(mtModels);
+        }
+      });
+    } else {
+      console.log('Adding language names to returned JSON')
+      var nmt_models = response.body.models;
+      // Get the name of each source/target language (it is easier done ofn the server)
+      for (var i=0; i<nmt_models.length; i++) {
+        nmt_models[i].source_name = ISO6391.getName(nmt_models[i].source);
+        nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
+        console.log(" NMT model "+i+": Translate "+nmt_models[i].source_name+" to "+nmt_models[i].target_name+" with model "+nmt_models[i].model_id);
+      }
+      res.json(nmt_models);
     }
-    res.json(nmt_models);
   });
 
   // The official way of doing it
   // language_translation.getModels(params, function(err, models) {
-  //   if (er) {
+  //   if (err) {
   //     return next(err);
   //   } else {
   //     var mtModels = models.models;
