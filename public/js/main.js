@@ -1595,7 +1595,7 @@ var LOOKUP_TABLE = {
   'ja-JP_BroadbandModel': ['sample-Ja_JP-wide1.wav', 'sample-Ja_JP-wide2.wav'],
   'ja-JP_NarrowbandModel': ['sample-Ja_JP-narrow3.wav', 'sample-Ja_JP-narrow4.wav'],
   'pt-BR_BroadbandModel': ['pt-BR_Sample1-16KHz.wav', 'pt-BR_Sample2-16KHz.wav'],
-  'fr-FR_BroadbandModel': ['fr-burke.wav', 'fr-grimm.wav'],
+  'fr-FR_BroadbandModel': ['fr-macron.wav', 'fr-burke.wav', 'fr-grimm.wav'],
   'zh-CN_BroadbandModel': ['zh-gospel.wav', 'zh-poem.wav']
 };
 
