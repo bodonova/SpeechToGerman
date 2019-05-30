@@ -109,20 +109,25 @@ var language_translation = watson.language_translation(mt_credentials);
 app.post('/api/translate', function(req, res, next) {
   var params = extend({ 'X-WDC-PL-OPT-OUT': req.header('X-WDC-PL-OPT-OUT')}, req.body);
   console.log(' ---> MT params: ' + JSON.stringify(params)); //L.R.
-  var url = mt_credentials.url + '/v2/translate?version=2017-07-01';
+  var url = mt_credentials.url + '/v3/translate?version=2018-05-01';
   console.log(' ---> translation URL '+url+' param '+JSON.stringify(params));
-  unirest.post(url).header('Accept', 'application/json')
-  .header('X-Watson-Technology-Preview','2017-07-01')
+  // .header('Accept', 'application/json')
+  unirest.post(url)
+  .header('Content-Type', 'application/json')
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send(params)
   .end(function (response) {
     if (response.error) {
-      console.log('new style call to get NMT models failed - try the old way');
+      console.log('Old URL style call to language translation failed - try the new way');
+      console.log(response.error)
       language_translation.translate(params, function(err, models) {
-      if (err)
-        return next(err);
-      else
-        res.json(models);
+        if (err) {
+          console.log('new way fails too');
+          console.log(err);
+          return next(err);
+        } else {
+          res.json(models);
+        }
       });
     } else {
       console.log(' ---> response code: '+response.code+' JSON: '+JSON.stringify(response.body));
@@ -143,12 +148,11 @@ app.get('/api/models', function(req, res, next) {
   console.log('Server is getting a list of translation model for a browser client');
 
   // get both the original MT models list and the new Neural MT type mtModels
-  var models_url = mt_credentials.url + '/v2/models?version=2017-07-01';
+  var models_url = mt_credentials.url + '/v3/models?version=2018-05-01';
   console.log(' ---> get NMT models URL '+models_url);
   console.log ('user='+mt_credentials.username+" password="+mt_credentials.password)
   unirest.get(models_url)
   .header('Accept', 'application/json')
-  .header('X-Watson-Technology-Preview','2017-07-01')
   .auth(mt_credentials.username, mt_credentials.password, true)
   .send()
   .end(function (response) {
