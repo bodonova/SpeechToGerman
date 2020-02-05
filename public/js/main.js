@@ -1079,21 +1079,30 @@ var initTextScroll = function() {
 function getVoice() {
 	var mt_target = getTargetLanguageCode().substring(0,2);
   console.log("asked for"+mt_target+"getting a voice for lang code "+mt_target);
-	var voice = '';
+  var voice = '';
+ 
 	if(mt_target == 'en')
 		voice = 'en-US_MichaelVoice'; // TODO: try 'en-US_AllisonVoice' or 'en-US_LisaVoice'
+  else if(mt_target == 'ar')
+		voice = 'ar-AR_OmarVoice'; // TODO: try 'en-US_AllisonVoice' or 'en-US_LisaVoice'
   else if(mt_target == 'de')
 		voice = 'de-DE_DieterVoice'; // could be de-DE_BirgitVoice';
   else if(mt_target == 'fr')
-		voice = 'fr-FR_ReneeVoice';
+		voice = 'fr-FR_ReneeV3Voice';
 	else if(mt_target == 'es')
-		voice = 'es-US_SofiaVoice';   // TODO: try 'es-ES_EnriqueVoice' or 'es-ES_LauraVoice'
+		voice = 'es-US_SofiaV3Voice';   // TODO: try 'es-ES_EnriqueVoice' or 'es-ES_LauraVoice'
 	else if(mt_target == 'pt')
 	voice = 'pt-BR_IsabelaVoice';
   else if(mt_target == 'ja')
-		voice = 'ja-JP_EmiVoice';
+    voice = 'ja-JP_EmiV3Voice';
+  else if(mt_target == 'nl')
+		voice = 'nl-NL_LiamVoice';
   else if(mt_target == 'it')
-		voice = 'it-IT_FrancescaVoice';
+		voice = 'it-IT_FrancescaV3Voice';
+  else if(mt_target == 'pt')
+		voice = 'pt-BR_IsabelaV3Voice';
+  else if(mt_target == 'zh')
+		voice = 'zh-CN_LiNaVoice';
   else
     voice = 'en-GB_KateVoice'; // default whenno model found
 	return voice;
