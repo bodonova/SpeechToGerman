@@ -69,16 +69,33 @@ console.log('MT configuration '+JSON.stringify(mt_env));
 if (!stt_env)
   throw('Incomplete configuration '+JSON.stringify(vcapServices));
 
-var stt_credentials = {version: 'v1', url: stt_env.url, username: stt_env.username, password: stt_env.password};
+//console.log("STT env"+JSON.stringify(stt_env));
+var stt_credentials = {};
+if (stt_env.username)
+  stt_credentials = {version: 'v1', url: stt_env.url, username: stt_env.username, password: stt_env.password};
+else
+  stt_credentials = {version: 'v1', url: stt_env.url, username: "apikey", password: stt_env.apikey};
 console.log('stt_credentials: '+JSON.stringify(stt_credentials));
-var tts_credentials = {version: 'v1', url: tts_env.url, username: tts_env.username, password: tts_env.password};
+
+var tts_credentials = {}
+if (tts_env.username)
+  tts_credentials = {version: 'v1', url: tts_env.url, username: tts_env.username, password: tts_env.password};
+else 
+tts_credentials = {version: 'v1', url: tts_env.url, username: "apikey", password: tts_env.apikey};
 console.log('tts_credentials: '+JSON.stringify(tts_credentials));
-var mt_credentials = {version: 'v2', url: mt_env.url, username: mt_env.username, password: mt_env.password};
+
+var mt_credentials = {};
+if (mt_env.username)
+  mt_credentials = {version: 'v2', url: mt_env.url, username: mt_env.username, password: mt_env.password};
+else
+  mt_credentials = {version: 'v2', url: mt_env.url, username: "apikey", password: mt_env.apikey};
 console.log('mt_credentials: '+JSON.stringify(mt_credentials));
 
 // ------------------------------- STT ---------------------------------
 // Get an authorization key for the STT service
+console.log("Get an authorization key for the STT service");
 var authorization = watson.authorization(stt_credentials);
+console.log("got here without creash")
 if (authorization) {
   console.log ('authorization: '+JSON.stringify(authorization));
 } else {
@@ -87,7 +104,7 @@ if (authorization) {
 
 // Get token from Watson using your credentials
 app.get('/token', function(req, res) {
-  //console.log ("Getting a token with credentials "+JSON.stringify(stt_credentials));
+  console.log ("Getting a token with credentials "+JSON.stringify(stt_credentials));
   authorization.getToken({url: stt_credentials.url}, function(err, token) {
     if (err) {
       console.log('getToken error:', err);
