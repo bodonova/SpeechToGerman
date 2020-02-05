@@ -615,22 +615,20 @@ function getServerModels(token) {
     for (var i=0; i<nmtModels.length; i++) {
 
       // Track the language code to name mappings (handy to know)
-      if (2 == nmtModels[i].source.length) { // ignore mapping from long codes
-        //console.log("storring mapping from "+nmtModels[i].source+" to "+nmtModels[i].source_name);
-        langCodeMap[nmtModels[i].source] = nmtModels[i].source_name;
-        langNameMap[nmtModels[i].source_name] = nmtModels[i].source;
-      }
-      if (2 == nmtModels[i].target.length) { // ignore mapping from long codes
-        //console.log("storring mapping from "+nmtModels[i].target+" to "+nmtModels[i].target_name);
-        langCodeMap[nmtModels[i].target] = nmtModels[i].target_name;
-        langNameMap[nmtModels[i].target_name] = nmtModels[i].target;
-      }
+      console.log("storing source mapping from "+nmtModels[i].source+" to "+nmtModels[i].source_name);
+      langCodeMap[nmtModels[i].source] = nmtModels[i].source_name;
+      langNameMap[nmtModels[i].source_name] = nmtModels[i].source;
+ 
+      console.log("storing target mapping from "+nmtModels[i].target+" to "+nmtModels[i].target_name);
+      langCodeMap[nmtModels[i].target] = nmtModels[i].target_name;
+      langNameMap[nmtModels[i].target_name] = nmtModels[i].target;
 
       // Add the source language to our sttModels (if we never saw them before)
-      var source = nmtModels[i].source.substring(0,2);
+      //var source = nmtModels[i].source.substring(0,2);
+      var source = nmtModels[i].source;
       var existing = sttModelMap[source];
       if (existing === undefined) {
-        //console.log("Adding "+source+" as a source language "+sttModels.length);
+        console.log("Adding "+source+" as a source language "+sttModels.length);
         sttModelMap[source]=sttModels.length;
         sttModels[sttModels.length] = {};
         sttModels[sttModels.length-1].language = source+"-"+source.toUpperCase();
@@ -639,7 +637,9 @@ function getServerModels(token) {
       }
 
       // Add to the transLangs structure
-   	  var target =  nmtModels[i].target.substring(0,2); // ignore longer codes
+      var target =  nmtModels[i].target
+      if (target.length>2)
+        console.log("Long target name "+target)
       if (!transLangs[source]) {
       	// the first time we saw this source language create the sub-structure
       	transLangs[source] = {};
@@ -647,6 +647,8 @@ function getServerModels(token) {
       transLangs[source][target] = nmtModels[i].model_id;
     }
 
+    console.log("Finished loading transLangs")
+   
     // Sort the STT models so they look nice in the list
     sttModels.sort(function (a, b){
     	var nameA=a.description || "";
@@ -1894,7 +1896,7 @@ exports.initSelectModel = function(ctx) {
     for (var key in targetLangCodes) {
       var possibleTargets = targetLangCodes[key];
       var targetName = langCodeMap[key];
-      console.log("If we choise target "+targetName+" the matching model is "+JSON.stringify(possibleTargets));
+      console.log("If we choose target "+targetName+" the matching model is "+JSON.stringify(possibleTargets));
       //list.append("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
       listItems.push("<li role='presentation'><a role='menuitem' tabindex='0'>"+targetName+"</a></li>");
     }

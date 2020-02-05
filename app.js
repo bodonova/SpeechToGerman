@@ -184,7 +184,13 @@ app.get('/api/models', function(req, res, next) {
       // Get the name of each source/target language (it is easier done ofn the server)
       for (var i=0; i<nmt_models.length; i++) {
         nmt_models[i].source_name = ISO6391.getName(nmt_models[i].source);
-        nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
+        if ("" == nmt_models[i].base_model_id) {
+          nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target);
+        } else {
+          console.log ("Adding custom model ID " + nmt_models[i].model_id);
+          nmt_models[i].target_name = ISO6391.getName(nmt_models[i].target) + ":" + nmt_models[i].model_id;
+          nmt_models[i].target +=  ":" + nmt_models[i].model_id;
+        }
         console.log(" NMT model "+i+": Translate "+nmt_models[i].source_name+" to "+nmt_models[i].target_name+" with model "+nmt_models[i].model_id);
       }
       res.json(nmt_models);
