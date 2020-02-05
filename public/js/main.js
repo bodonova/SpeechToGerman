@@ -1077,8 +1077,8 @@ var initTextScroll = function() {
 // L.R.
 // --------------------------------- MT & TTS ----------------------------------------
 function getVoice() {
-	var mt_target = getTargetLanguageCode();
-  //console.log("getting a voice for lang code "+mt_target);
+	var mt_target = getTargetLanguageCode().substring(0,2);
+  console.log("asked for"+mt_target+"getting a voice for lang code "+mt_target);
 	var voice = '';
 	if(mt_target == 'en')
 		voice = 'en-US_MichaelVoice'; // TODO: try 'en-US_AllisonVoice' or 'en-US_LisaVoice'
