@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tmx version="1.4">
+  <header creationtool="" creationtoolversion=""
+    segtype="phrase" o-tmf="" adminlang="de"
+    srclang="de" datatype="PlainText" o-encoding="UTF-8" />
+<body>
+  <tu>
+    <tuv xml:lang="de">
+      <seg>Hallo Welt</seg>
+    </tuv>
+    <tuv xml:lang="en">
+      <seg>Hello to a world where Brian is King</seg>
+    </tuv>
+  </tu>
+</body>
+</tmx>
